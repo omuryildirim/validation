@@ -3,7 +3,6 @@
     Validation has 15 main validation functions. You can add any function or basicly call
     any function when creating validation objects.
 
-    * v2.2.0 - Realese 06/23/2016
     * Open Source, Free for all usage
 
     * from .. .. . . .
@@ -156,7 +155,7 @@ validator.prototype = {
           $.each(tagObject, function(tag, propertiesObject) {
             var rule = new RegExp(".[" + propertiesObject.rule + "]");
             $.each($(tag), function(e, f) {
-              var currentElement = $(f).parents(propertiesObject.parentTag).find(".selectized").length ? $(f).parents(propertiesObject.parentTag).find("select")[0]: $(f).parents(propertiesObject.parentTag).find("input,select")[0];
+              var currentElement = $(f).parents(propertiesObject.parentTag).find(".selectized").length ? $(f).parents(propertiesObject.parentTag).find("select")[0]: $(f).parents(propertiesObject.parentTag).find("input,select,textarea")[0];
               if (propertiesObject.visibility)
                 if (!plugin.checkVisibility(currentElement))
                   return true;
@@ -220,7 +219,7 @@ validator.prototype = {
       };
     });
 
-    if (typeof plugin.errorObject == "object" && workType != "not-process-errors")
+    if (typeof plugin.errorObject == "object" && plugin.errorObject.length && workType != "not-process-errors")
         plugin.processErrors();
     else
       return mainResult;
@@ -331,6 +330,8 @@ validator.prototype = {
     var plugin = this;
     switch (processType) {
       default:
+        var newObject = plugin.errorObject.slice(),
+            sliced = 0;
         $.each(plugin.errorObject, function(index, elementArray) {
           if (elementArray && elementArray[0] == elementArray[1]) {
             var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag).attr("data-uniqueparent", elementArray[0]);
@@ -351,9 +352,12 @@ validator.prototype = {
             plugin.changeRemover(elementArray[0], elementArray[1]);
             plugin.processErrorAnimation("add", elementArray);
 
-            delete plugin.errorObject[index];
+
+            newObject.splice(index-sliced, 1);
+            sliced += 1;
           }
         });
+        plugin.errorObject = newObject;
         plugin.processErrorAnimation("process");
 
         break;
@@ -366,9 +370,11 @@ validator.prototype = {
         delete plugin.selfErrorObject;
         break;
       case "Keypress Error":
+        var newObject = plugin.errorObject.slice(),
+            sliced = 0;
         $.each(plugin.errorObject, function(index, elementArray) {
           if (elementArray && elementArray[0] != elementArray[1]) {
-            if ($("[data-uniqueerror='" + elementArray[1] + "']").length)
+            if ($("[data-uniqueparent='" + elementArray[0] + "'] [data-uniqueerror='" + elementArray[1] + "']").length)
               plugin.removeErrorElements(elementArray[0], elementArray[1], "animation-off");
 
             var errorDiv = plugin.createErrorDiv("Rule", false, elementArray[2].message, false, elementArray[1]);
@@ -378,9 +384,11 @@ validator.prototype = {
             .addClass(plugin.classNames.hasError)
             .append(errorDiv);
 
-            delete plugin.errorObject[index];
+            newObject.splice(index-sliced, 1);
+            sliced += 1;
           }
         });
+        plugin.errorObject = newObject;
         break;
     }
   },
@@ -481,7 +489,7 @@ validator.prototype = {
       return true;
     }
     var targetElement = $("[data-uniqueparent='" + uniqueKey + "']");
-    var errorElement = "[data-uniqueerror='" + errorKey + "']";
+    var errorElement = "[data-uniqueparent='" + uniqueKey + "'] [data-uniqueerror='" + errorKey + "']";
     if (!targetElement.is("." + _this.classNames.errorSuccess)) {
       switch (animation) {
         case "animation-off":
@@ -832,8 +840,19 @@ validator.prototype = {
   },
   emailCharacterCheck: function(e) {
     var keychar,
-      regEx,
-      validate = new validator();
+      regEx = /\@|\.|\-|\_/;
+
+    if (e.type == "paste") {
+      var data = $(e.target).val();
+      var response = "";
+      for (var i=0; i<data.length; i++) {
+        var keyCode = data.charCodeAt(i);
+        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || (keyCode > 47) && (keyCode < 58) || regEx.test(data[i]))
+          response += data[i];
+      }
+      e.target.value = response;
+    }
+
     var keyCode;
     if (window.event) {
       keyCode = e.keyCode
@@ -842,7 +861,6 @@ validator.prototype = {
     }
 
     keychar = String.fromCharCode(keyCode);
-    regEx = new RegExp("\@|\.|\-|\_");
 
     switch (keyCode) {
       case null:
@@ -852,7 +870,7 @@ validator.prototype = {
         return true;
         break;
       default:
-        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || validate.isNumericCheck(e) || regEx.test(keychar) > -1)
+        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || (keyCode > 47) && (keyCode < 58) || regEx.test(keychar))
           return true;
         break;
     };
@@ -865,6 +883,17 @@ validator.prototype = {
       keyCode = e.keyCode
     } else if (e.which) {
       keyCode = e.which
+    }
+
+    if (e.type == "paste") {
+      var data = $(e.target).val();
+      var response = "";
+      for (var i=0; i<data.length; i++) {
+        var keyCode = data.charCodeAt(i);
+        if ((keyCode > 47) && (keyCode < 58))
+          response += data[i];
+      }
+      e.target.value = response;
     }
 
     switch (keyCode) {
@@ -895,6 +924,17 @@ validator.prototype = {
       214: true,
       246: true
     };
+
+    if (e.type == "paste") {
+      var data = $(e.target).val();
+      var response = "";
+      for (var i=0; i<data.length; i++) {
+        var keyCode = data.charCodeAt(i);
+        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || turkishCharacter[keyCode])
+          response += data[i];
+      }
+      e.target.value = response;
+    }
 
     if (window.event) {
       keyCode = e.keyCode
@@ -945,7 +985,18 @@ validator.prototype = {
   },
   isPnrValidCheck: function(e) {
     var keyCode;
-    var insideValidation = new validator;
+
+    if (e.type == "paste") {
+      var data = $(e.target).val();
+      var response = "";
+      for (var i=0; i<data.length; i++) {
+        var keyCode = data.charCodeAt(i);
+        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || (keyCode > 47) && (keyCode < 58))
+          response += data[i];
+      }
+      e.target.value = response;
+    }
+
     if (window.event) {
       keyCode = e.keyCode
     } else if (e.which) {
@@ -957,7 +1008,7 @@ validator.prototype = {
         return false;
         break;
       default:
-        if (insideValidation.isCharacterCheck(e) || insideValidation.isNumericCheck(e))
+        if ((keyCode > 64 && keyCode < 91) || (keyCode < 123 && keyCode > 96) || (keyCode > 47) && (keyCode < 58))
           return true;
         break;
     };
@@ -971,21 +1022,37 @@ validator.prototype = {
     if (obj.Character)
       $.each(obj.Character, function(i, e) {
         $(e).on("keypress", validate.isCharacterWithTurkishCheck);
+        $(document).on('paste', e, function(event) {
+          validate.pasteHandler(event, validate, "Character");
+          return true;
+        });
       });
 
     if (obj.Numeric)
       $.each(obj.Numeric, function(i, e) {
         $(e).on("keypress", validate.isNumericCheck);
+        $(document).on('paste', e, function(event) {
+          validate.pasteHandler(event, validate, "Numeric");
+          return true;
+        });
       });
 
     if (obj.Email)
       $.each(obj.Email, function(i, e) {
         $(e).on("keypress", validate.emailCharacterCheck);
+        $(document).on('paste', e, function(event) {
+          validate.pasteHandler(event, validate, "Email");
+          return true;
+        });
       });
 
     if (obj.PNR)
       $.each(obj.PNR, function(i, e) {
         $(e).on("keypress", validate.isPnrValidCheck);
+        $(document).on('paste', e, function(event) {
+          validate.pasteHandler(event, validate, "PNR");
+          return true;
+        });
       });
 
     if (obj.Phone)
@@ -999,6 +1066,24 @@ validator.prototype = {
       });
 
     delete validate.initObject;
+  },
+  pasteHandler: function(event, plugin, initFunction) {
+    setTimeout(function() {
+      switch (initFunction) {
+        case "Character":
+          plugin.isCharacterWithTurkishCheck(event);
+          break;
+        case "Numeric":
+          plugin.isNumericCheck(event);
+          break;
+        case "Email":
+          plugin.emailCharacterCheck(event);
+          break;
+        case "PNR":
+          plugin.isPnrValidCheck(event);
+          break;
+      }
+    });
   },
   classNames: {
     "errorDivClass": "input-error",
