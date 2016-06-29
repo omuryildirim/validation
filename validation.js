@@ -3,7 +3,7 @@
     Validation has 15 main validation functions. You can add any function or basicly call
     any function when creating validation objects.
 
-    * v2.1.4 - Realese 05/12/2016
+    * v2.2.0 - Realese 06/23/2016
     * Open Source, Free for all usage
 
     * from .. .. . . .
@@ -48,6 +48,7 @@ validator.prototype = {
   },
   validate: function(eventType, tag, workType, returnFunction) {
     var plugin = this;
+    plugin.uniqueKey = new Date().getTime();
 
     if (typeof plugin.validationObj[tag] == "object")
       plugin.keypressValidation(plugin.validationObj[tag]);
@@ -160,11 +161,12 @@ validator.prototype = {
                 if (!plugin.checkVisibility(currentElement))
                   return true;
               if (rule.test(f.innerHTML) && !plugin.checkEmpty(currentElement)) {
+                var key = plugin.createUniqueKey(currentElement);
                 if (plugin.errorObject)
-                  plugin.errorObject[plugin.errorObject.length] = [currentElement, propertiesObject];
+                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
                 else {
                   plugin.errorObject = [];
-                  plugin.errorObject[plugin.errorObject.length] = [currentElement, propertiesObject];
+                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
                 }
               };
 
@@ -184,15 +186,16 @@ validator.prototype = {
                     if (!plugin.checkVisibility(currentElement))
                       return true;
                   if (!plugin.checkEmpty(currentElement)) {
+                    var key = plugin.createUniqueKey(currentElement);
                     if (plugin.errorObject) {
                       var newPropertiesObject = $.extend({}, propertiesObject);
                       if (newPropertiesObject.messageType == "List") newPropertiesObject.currentIndex = index;
-                      plugin.errorObject[plugin.errorObject.length] = [currentElement, newPropertiesObject];
+                      plugin.errorObject[plugin.errorObject.length] = [key, key, newPropertiesObject];
                     } else {
                       plugin.errorObject = [];
                       var newPropertiesObject = $.extend({}, propertiesObject);
                       if (newPropertiesObject.messageType == "List") newPropertiesObject.currentIndex = index;
-                      plugin.errorObject[plugin.errorObject.length] = [currentElement, newPropertiesObject];
+                      plugin.errorObject[plugin.errorObject.length] = [key, key, newPropertiesObject];
                     }
                   }
               });
@@ -203,11 +206,12 @@ validator.prototype = {
                 if (!plugin.checkVisibility(currentElement))
                   return true;
               if (!plugin.checkEmpty(currentElement)) {
+                var key = plugin.createUniqueKey(currentElement);
                 if (plugin.errorObject)
-                  plugin.errorObject[plugin.errorObject.length] = [currentElement, propertiesObject];
+                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
                 else {
                   plugin.errorObject = [];
-                  plugin.errorObject[plugin.errorObject.length] = [currentElement, propertiesObject];
+                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
                 }
               };
             }
@@ -228,44 +232,82 @@ validator.prototype = {
     $.each(validationObj, function(type, tagObject) {
       var eventType = type;
       $.each(tagObject, function(tag, propertiesObject) {
+        propertiesObject.uniqueKey = plugin.createUniqueKey();
         if (propertiesObject.ruleObject) {
           $(document).on(eventType, tag, function(e) {
             if ((propertiesObject.visibility && !plugin.checkVisibility(this)) || $(this).val() == '')
               return false;
+
+            var uniqueKey = plugin.createUniqueKey(this);
             var result = propertiesObject.ruleObject[0](propertiesObject.ruleObject[1], plugin, $(this));
-            if (plugin.keypressErrorObject) {
-              plugin.keypressErrorObject[2] = propertiesObject;
+
+            var element = $(this);
+            if (result[1]) {
+              propertiesObject.message = result[1].message;
+              if (result[1].placeErrorTo)
+                element = $(result[1].placeErrorTo);
+            }
+            if (!result[0] && result[1]) {
+              $.each(element, function(index,item) {
+                var elementKey = plugin.createUniqueKey($(item));
+                plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
+              });
               plugin.processErrors("Keypress Error");
-            } else if (plugin.keypressNodes)
-              plugin.processErrors("Keypress Nodes");
+            } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
+              $.each(element, function(index,item) {
+                var elementKey = plugin.createUniqueKey($(item));
+                plugin.removeErrorElements(elementKey, propertiesObject.uniqueKey, "animation-off");
+              });
+            }
             if (propertiesObject.withReturn)
               return result;
-            if (!result[0]) {
-              plugin.errorObject = [result[1]];
-              plugin.processErrors("Add Self Class");
-            } else {
-              plugin.errorObject = [result[1]];
-              plugin.processErrors("Remove Self Class");
+            if (!result[1]) {
+              if (!result[0]) {
+                plugin.selfErrorObject = [uniqueKey];
+                plugin.processErrors("Add Self Class");
+              } else {
+                plugin.selfErrorObject = [uniqueKey];
+                plugin.processErrors("Remove Self Class");
+              }
             }
           });
         } else {
           $(document).on(eventType, tag, function(e) {
             if ((propertiesObject.visibility && !plugin.checkVisibility(this)) || $(this).val() == '')
               return false;
-            if (!propertiesObject.rule(this)) {
-              plugin.errorObject = [this];
-              plugin.processErrors("Add Self Class");
-            } else {
-              plugin.errorObject = [this];
-              plugin.processErrors("Remove Self Class");
-            }
-            if (plugin.keypressErrorObject) {
-              plugin.keypressErrorObject[2] = propertiesObject;
-              plugin.processErrors("Keypress Error");
-            } else if (plugin.keypressNodes)
-              plugin.processErrors("Keypress Nodes");
-          });
 
+            var uniqueKey = plugin.createUniqueKey(this);
+
+            var result = propertiesObject.rule(this);
+            if (!result[1]) {
+              if (!result[0]) {
+                plugin.selfErrorObject = [uniqueKey];
+                plugin.processErrors("Add Self Class");
+              } else {
+                plugin.selfErrorObject = [uniqueKey];
+                plugin.processErrors("Remove Self Class");
+              }
+            }
+            var element = $(this);
+            if (result[1]) {
+              propertiesObject.message = result[1].message;
+              if (result[1].placeErrorTo)
+                element = $(result[1].placeErrorTo);
+            }
+
+            if (!result[0] && result[1]) {
+              $.each(element, function(index,item) {
+                var elementKey = plugin.createUniqueKey($(item));
+                plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
+              });
+              plugin.processErrors("Keypress Error");
+            } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
+                $.each(element, function(index,item) {
+                  var elementKey = plugin.createUniqueKey($(item));
+                  plugin.removeErrorElements(elementKey, propertiesObject.uniqueKey, "animation-off");
+                });
+            }
+          });
         }
       });
     });
@@ -289,144 +331,174 @@ validator.prototype = {
     var plugin = this;
     switch (processType) {
       default:
-        $.each(this.errorObject, function(index, elementArray) {
-          if (elementArray[1].messageType == "List")
-            var errorDiv = plugin.createErrorDiv(elementArray[1].type, elementArray[1].showLabel, elementArray[1].messages[elementArray[1].currentIndex], elementArray[1].parentTag, elementArray[0]);
-          else
-            var errorDiv = plugin.createErrorDiv(elementArray[1].type, elementArray[1].showLabel, elementArray[1].message, elementArray[1].parentTag, elementArray[0]);
+        $.each(plugin.errorObject, function(index, elementArray) {
+          if (elementArray && elementArray[0] == elementArray[1]) {
+            var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag).attr("data-uniqueparent", elementArray[0]);
 
-          var targetElement = $(elementArray[0]).parents(elementArray[1].parentTag);
-          targetElement.find("."+plugin.classNames.errorDivClass).remove();
-          targetElement.addClass(plugin.classNames.hasError).append(errorDiv);
-          targetElement.find("."+plugin.classNames.errorDivClass).height(targetElement.find("."+plugin.classNames.errorDivClass).height());
+            if (elementArray[2].messageType == "List")
+              var errorDiv = plugin.createErrorDiv(elementArray[2].type, elementArray[2].showLabel, elementArray[2].messages[elementArray[2].currentIndex], elementArray[2].parentTag, elementArray[1]);
+            else
+              var errorDiv = plugin.createErrorDiv(elementArray[2].type, elementArray[2].showLabel, elementArray[2].message, elementArray[2].parentTag, elementArray[1]);
 
-          if ($(elementArray[0]).is("[id^='bday']")) {
-            targetElementt.next().addClass(plugin.classNames.hasError).next().addClass(plugin.classNames.hasError);
+            $("[data-uniqueerror='" + elementArray[1] + "']").remove();
+            targetElement.addClass(plugin.classNames.hasError).append(errorDiv);
+            $("[data-uniqueerror='" + elementArray[1] + "']").height($("[data-uniqueerror='" + elementArray[1] + "']").height());
+
+            if ($(elementArray[0]).is("[id^='bday']")) {
+              targetElementt.next().addClass(plugin.classNames.hasError).next().addClass(plugin.classNames.hasError);
+            }
+
+            plugin.changeRemover(elementArray[0], elementArray[1]);
+            plugin.processErrorAnimation("add", elementArray);
+
+            delete plugin.errorObject[index];
           }
-
-          plugin.changeRemover(elementArray);
-          plugin.processErrorAnimation("add", elementArray);
         });
         plugin.processErrorAnimation("process");
 
-        delete plugin.errorObject;
         break;
       case "Add Self Class":
-        $(plugin.errorObject[0]).each(function(index, value) {
-          $(value).addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-hasError", true);
-        });
-        delete plugin.errorObject;
+        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-hasError", true);
+        delete plugin.selfErrorObject;
         break;
       case "Remove Self Class":
-        $(plugin.errorObject[0]).each(function(index, value) {
-          $(value).removeClass(plugin.classNames.errorSelfClass).addClass(plugin.classNames.successSelfClass).attr("data-hasError", false);
-        });
-        delete plugin.errorObject;
+        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").removeClass(plugin.classNames.errorSelfClass).addClass(plugin.classNames.successSelfClass).attr("data-hasError", false);
+        delete plugin.selfErrorObject;
         break;
       case "Keypress Error":
-        var errorDiv = plugin.createErrorDiv("Rule", false, plugin.keypressErrorObject[1]);
-        plugin.keypressErrorObject[0].parents(plugin.keypressErrorObject[2].parentTag).find("."+plugin.classNames.errorDivClass).remove();
-        plugin.keypressErrorObject[0].parents(plugin.keypressErrorObject[2].parentTag).append(errorDiv);
-        if (plugin.keypressNodes)
-          plugin.processErrors("Keypress Nodes"),plugin.keypressNodes = [], plugin.keypressNodes[plugin.keypressNodes.length] = plugin.keypressErrorObject[0].parents(plugin.keypressErrorObject[2].parentTag).find("."+plugin.classNames.errorDivClass);
+        $.each(plugin.errorObject, function(index, elementArray) {
+          if (elementArray && elementArray[0] != elementArray[1]) {
+            if ($("[data-uniqueerror='" + elementArray[1] + "']").length)
+              plugin.removeErrorElements(elementArray[0], elementArray[1], "animation-off");
 
-        else
-          plugin.keypressNodes = [], plugin.keypressNodes[plugin.keypressNodes.length] = plugin.keypressErrorObject[0].parents(plugin.keypressErrorObject[2].parentTag).find("."+plugin.classNames.errorDivClass);
-        delete plugin.keypressErrorObject;
-        break;
-      case "Keypress Nodes":
-        $.each(plugin.keypressNodes, function(index,value) {
-          value.remove();
+            var errorDiv = plugin.createErrorDiv("Rule", false, elementArray[2].message, false, elementArray[1]);
+
+            var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag)
+            .attr("data-uniqueparent", elementArray[0])
+            .addClass(plugin.classNames.hasError)
+            .append(errorDiv);
+
+            delete plugin.errorObject[index];
+          }
         });
-        delete plugin.keypressNodes;
         break;
     }
   },
-  createErrorDiv: function(type, showLabel, message, parentTag, element) {
-    var errorDiv;
+  createErrorDiv: function(type, showLabel, message, parentTag, uniqueKey) {
+    var errorDiv = $("<div/>", {class: this.classNames.errorDivClass, "data-uniqueerror": uniqueKey});
+
     switch (type) {
       case "Label":
         if (showLabel)
-          errorDiv = '<div class="' + this.classNames.errorDivClass + '">' + $(element).parents(parentTag).find("label")[0].innerHTML + message + '</div>';
+          errorDiv = errorDiv.append($("[data-uniqueparent='" + uniqueKey + "']").find("label")[0].innerHTML + message);
         else
-          errorDiv = '<div class="' + this.classNames.errorDivClass + '">' + message + '</div>';
+          errorDiv = errorDiv.append(message);
         break;
 
       case "Rule":
-        errorDiv = '<div class="' + this.classNames.errorDivClass + '">' + message + '</div>';
+        errorDiv = errorDiv.append(message);
         break;
 
       case "Checkbox":
-        errorDiv = '<div class="' + this.classNames.errorDivClass + ' ' + this.classNames.errorCheckbox + '"></div>';
+        errorDiv = errorDiv.addClass(this.classNames.errorCheckbox);
         break;
 
       case "Radio":
-        errorDiv = '<div class="' + this.classNames.errorDivClass + ' ' + this.classNames.errorRadio + '">' + message + '</div>';
+        errorDiv = errorDiv.addClass(this.classNames.errorRadio),errorDiv.append(message);
         break;
 
       case "General":
-        errorDiv = '<div class="' + this.classNames.errorDivClass + ' ' + this.classNames.errorGeneral + '">' + message + '</div>';
+        errorDiv = errorDiv.addClass(this.classNames.errorGeneral),errorDiv.append(message);
         break;
 
       case "HasError":
-        errorDiv = '<div class="' + this.classNames.errorDivClass + ' ' + this.classNames.errorGeneral + '">' + message + '</div>';
+        errorDiv = errorDiv.addClass(this.classNames.errorGeneral),errorDiv.append(message);
         break;
     }
     return errorDiv;
   },
-  changeRemover: function(elementObject) {
+  createUniqueKey: function(currentElement) {
+    if (currentElement && !$(currentElement).data("uniqueelement")) {
+      this.uniqueKey += 1;
+      $(currentElement).attr("data-uniqueelement", this.uniqueKey);
+    } else if (!currentElement) {
+      this.uniqueKey += 1;
+    } else {
+      return $(currentElement).data("uniqueelement");
+    }
+
+    return this.uniqueKey;
+  },
+  changeRemover: function(uniqueKey, errorKey) {
     var _this = this;
-    var select = $(elementObject[0]).is("select");
-    var checkbox = $(elementObject[0]).is("[type='checkbox']");
-    var expire = $(elementObject[0]).is("[name^=\"expiry\"]");
-    var id = "#" + $(elementObject[0]).attr("id") || "." + $(elementObject).attr("class");
-    var date = $(elementObject[0]).attr("format");
+    var currentElement = $("[data-uniqueelement='" + uniqueKey + "']")
+    var select = currentElement.is("select");
+    var checkbox = currentElement.is("[type='checkbox']");
+    var expire = currentElement.is("[name^=\"expiry\"]");
+    var id = "#" + currentElement.attr("id") || "." + currentElement.attr("class");
+    var date = currentElement.attr("format");
 
     if (checkbox || date)
       $(document).on("change", id, function() {
-        _this.removeErrorElements($(this).parents(elementObject[1].parentTag)),_this.updateBottomError(this.id||this.className);
+        _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
       });
     else if (expire)
       $(document).on("change", id, function() {
         if ($(this).val() != "")
-          _this.removeErrorElements($(this).parent().parent().parent()),_this.updateBottomError(this.id||this.className);
+          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
       });
     else if (select)
 	    if ($(id).is("[id^='bday']")) {
 	      $(document).on("change", id, function(e) {
 	        if ($(e.target).val() != "")
-	          _this.removeErrorElements($(e.target).parents(elementObject[1].parentTag)),_this.updateBottomError(this.id||this.className);
+	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
 	      });
 	      $(document).on("change", "#" + $(el).parents(elementObject[1].parentTag).next().find("select").attr("id"), function(e) {
 	        if ($(e.target).val() != "")
-	          _this.removeErrorElements($(e.target).parents(elementObject[1].parentTag)).remove();
+	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on");
 	      });
 	      $(document).on("change", "#" + $(el).parents(elementObject[1].parentTag).next().next().find("select").attr("id"), function(e) {
 	        if ($(e.target).val() != "")
-	          _this.removeErrorElements($(e.target).parents(elementObject[1].parentTag));
+	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on");
 	      });
 	    } else
 	      $(document).on("change", id, function() {
 	        if ($(this).val() != "")
-	          _this.removeErrorElements($(this).parents(elementObject[1].parentTag)),_this.updateBottomError(this.id||this.className);
+	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
 	      });
     else
 	    $(document).on("keypress", id, function() {
 	      if ($(this).val() != "")
-	        _this.removeErrorElements($(this).parents(elementObject[1].parentTag)),_this.updateBottomError(this.id||this.className);
+	        _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
 	    });
   },
-  removeErrorElements: function(targetElement) {
+  removeErrorElements: function(uniqueKey, errorKey, animation) {
     _this = this;
+    if (typeof uniqueKey == "object") {
+      $.each(uniqueKey, function(index,key) {
+        _this.removeErrorElements(key, errorKey, animation);
+      });
+      return true;
+    }
+    var targetElement = $("[data-uniqueparent='" + uniqueKey + "']");
+    var errorElement = "[data-uniqueerror='" + errorKey + "']";
     if (!targetElement.is("." + _this.classNames.errorSuccess)) {
-      targetElement.addClass(_this.classNames.errorSuccess);
-      setTimeout(function() {
-        targetElement.children("." + _this.classNames.errorDivClass).remove();
-        targetElement.removeClass(_this.classNames.hasError);
-      }, 1000);
-      setTimeout(function() {
-        targetElement.removeClass(_this.classNames.errorSuccess);
-      }, 2000);
+      switch (animation) {
+        case "animation-off":
+          targetElement.removeClass(_this.classNames.hasError);
+          $(errorElement).remove();
+          break;
+        case "animation-on":
+          targetElement.addClass(_this.classNames.errorSuccess);
+          setTimeout(function() {
+            targetElement.removeClass(_this.classNames.hasError);
+            $(errorElement).remove();
+          }, 1000);
+          setTimeout(function() {
+            targetElement.removeClass(_this.classNames.errorSuccess);
+          }, 2000);
+          break;
+      }
     }
   },
   updateBottomError: function(id) {
@@ -438,8 +510,8 @@ validator.prototype = {
     var plugin = this;
     switch (workStatus) {
       case "add":
-        var selectedDiv = $(errorObject[0]);
-        plugin.pageErrorParent = selectedDiv.parents(errorObject[1].parentTag);
+        var selectedDiv = $("[data-uniqueelement='" + errorObject[0] + "']");
+        plugin.pageErrorParent = $("[data-uniqueparent='" + errorObject[0] + "']");
         if (selectedDiv.is("select")) {
           plugin.pageErrorHTML += "<div data-errorid=\'" + (selectedDiv[0].id || selectedDiv[0].className) + "\' class='" + plugin.classNames.bottomEachErrorClass +
            "' onclick='$(\"html,body\").stop().animate({scrollTop:" + plugin.pageErrorParent.offset().top + "});$(\"#"+selectedDiv.attr("id")+"\").next(\".selectize-control\").children(\".selectize-input\").trigger(\"click\");' >";
@@ -476,46 +548,46 @@ validator.prototype = {
 
     var email = $(e).val();
     if (!re.test(email) || email == "" || email == null) {
-      return false;
+      return [false];
     }
-    return true;
+    return [true];
   },
   checkPhone: function(e) {
-    var result = true;
+    var result = [true];
 
     f = "#alt-tel-number";
 
     $(e).each(function(index) {
 
       if ($(this).val() == null || $(this).val() == "")
-        result = false;
+        result = [false];
 
       var count = this.id.replace("frst-tel-number", "");
 
       if (this.value == $(f + count).val()) {
-        result = false;
+        result = [false];
       }
 
       if (this.value.length < 6 && /\ /g.test(this.value[this.value.length-1]) || (!/\+/g.test(this.value) && !this.value.length))
-        return true;
+        return [true];
 
       if (!$(this).intlTelInput("isValidNumber")) {
         switch ($(this).intlTelInput("getValidationError")) {
 
           case intlTelInputUtils.validationError.TOO_SHORT:
-            result = false;
+            result = [false];
             break;
 
           case intlTelInputUtils.validationError.INVALID_COUNTRY_CODE:
-            result = false;
+            result = [false];
             break;
 
           case intlTelInputUtils.validationError.TOO_LONG:
-            result = false;
+            result = [false];
             break;
 
           default:
-            result = false;
+            result = [false];
             break;
 
         }
@@ -525,19 +597,19 @@ validator.prototype = {
         switch ($(f + count).intlTelInput("getValidationError")) {
 
           case intlTelInputUtils.validationError.TOO_SHORT:
-            result = false;
+            result = [false];
             break;
 
           case intlTelInputUtils.validationError.INVALID_COUNTRY_CODE:
-            result = false;
+            result = [false];
             break;
 
           case intlTelInputUtils.validationError.TOO_LONG:
-            result = false;
+            result = [false];
             break;
 
           default:
-            result = false;
+            result = [false];
             break;
 
         }
@@ -553,7 +625,7 @@ validator.prototype = {
 
     e = "#adult", f = "#child", g = "#infant";
 
-    var result = [true, adult, child, infant];
+    var result = [true];
     //Create variables for passenger object
 
     var totalAdultCount = parseInt($(adult).val());
@@ -570,13 +642,13 @@ validator.prototype = {
     var totalSeatCount = (totalAdultCount + totalChildCount);
 
     if (totalAdultCount < totalInfantCount)
-      result = [false, adult, infant], plugin.keypressErrorObject = [nodeElement, infCantGreater];
+      result = [false, {placeErrorTo: [adult, infant], message: infCantGreater}];
     else if (totalAdultCount == 0 && totalChildCount > 0)
-      result = [false, adult, infant], plugin.keypressErrorObject = [nodeElement, withoutParents];
+      result = [false, {placeErrorTo: [adult, infant], message: withoutParents}];
     else if (totalSeatCount > maxPassengerCount)
-      result = [false, adult, infant, child], plugin.keypressErrorObject = [nodeElement, maxPassengerError];
+      result = [false, {placeErrorTo: [adult, infant, child], message: maxPassengerError}];
     else if (totalSeatCount == 0)
-      result = [false, adult, infant, child], plugin.keypressErrorObject = [nodeElement, leastOnePassenger];
+      result = [false, {placeErrorTo: [adult, infant, child], message: leastOnePassenger}];
 
     return result;
 
@@ -610,16 +682,15 @@ validator.prototype = {
     thisSelect = $(thisSelect);
 
     var thisHiddenObject = $("#" + thisSelect.attr("id").split("_")[0] + "_hidden_" + thisSelect.attr("id").split("_")[2]);
-    var dateParent = [thisHiddenObject.next(), thisHiddenObject.next().next(), thisHiddenObject.next().next().next()];
-    var result = [true, dateParent];
+    var result = [true, {placeErrorTo: thisHiddenObject}];
 
     var thisHidden = thisHiddenObject.val();
     if (thisHidden == "NaN") {
-      return [false, dateParent];
+      return result;
     }
 
     if (thisHidden == null || thisHidden == "") {
-      return [false, dateParent];
+      return result;
     }
 
     var checkDate = dateObject.startDate == dateObject.endDate ? dateObject.startDate:dateObject.endDate;
@@ -637,11 +708,11 @@ validator.prototype = {
     var diffDep = innerValidate.checkDate(checkDate, thisDate, false);
 
     if (!(limitEnd > diffDep)) {
-      result = [false, dateParent];
-      thisPlugin.keypressErrorObject = [thisSelect, ageError[title][paxType][whichDate].lower];
+      result[1].message = ageError[title][paxType][whichDate].lower;
+      result[0] = false;
     } else if (!(diffDep >= limitStart)) {
-      result = [false, dateParent];
-      thisPlugin.keypressErrorObject = [thisSelect, ageError[title][paxType][whichDate].higher];
+      result[1].message = ageError[title][paxType][whichDate].higher;
+      result[0] = false;
     }
 
     return result;
@@ -650,24 +721,19 @@ validator.prototype = {
   checkIfSame: function(array, thisPlugin) {
     var first = array[0],
       second = array[1],
-      result = [true, $(array[0])];
+      result = [true, {placeErrorTo: [first,second]}];
 
 
     if (array[2] == "password" && $(first).val().length < parseInt(minPassWordLength)) {
-      result = [false, first];
+      result = [false, {placeErrorTo: first}];
     } else if ($(first).val().length) {
       if ($(second).val().length) {
-        if ($(first).val() == $(second).val()) {
-          result = [true, [first, second]];
-        } else {
-          result = [false, [first, second]];
-          thisPlugin.keypressErrorObject = [$(first), mustBeSame];
+        if ($(first).val() != $(second).val()) {
+          result = [false, {placeErrorTo: [first,second], message: mustBeSame}];
         }
-      } else {
-        result = [false, second];
       }
     } else {
-      result = [false, first];
+      result = [false, {placeErrorTo: [first,second], message: mustBeSame}];
     }
 
     return result;
@@ -676,7 +742,7 @@ validator.prototype = {
     var natID = idArray[0];
     var natIDtype = idArray[1];
 
-    var result = [true, current];
+    var result = [true];
     if (natID != "")
       switch (natIDtype) {
         case "TR":
@@ -684,7 +750,7 @@ validator.prototype = {
           var tckimlikno_str = natID;
 
           if (natID.length != 11) {
-            result[0] = false;
+            result = [false];
           }
 
           Tmp = Math.floor(parseInt(tckimlikno_str) / 100);
@@ -712,15 +778,15 @@ validator.prototype = {
           Tmp = Tmp * 100 + ChkDigit1 * 10 + ChkDigit2;
 
           if (Tmp != tckimlikno_str) {
-            result[0] = false;
+            result = [false];
           }
           break;
         case "IR":
           if (natID.length != 10) {
-            result[0] = false;
+            result = [false];
           } else {
             if (natID.substr(0, 3) == '000')
-              result[0] = false;
+              result = [false];
             else {
               var check = 0;
               for (var i = 0; i < natID.length; i++) {
@@ -728,7 +794,7 @@ validator.prototype = {
                 check += num * (10 - i)
               }
               if (check % 11) {
-                result[0] = false;
+                result = [false];
               }
             }
           }
@@ -740,11 +806,12 @@ validator.prototype = {
     var plugin = this;
     $.each(tagObject, function (tag, propertiesObject) {
       if (!$(tag).prop("checked") && $(tag).is(":visible")) {
+        var key = plugin.createUniqueKey(tag);
         if (plugin.errorObject)
-          plugin.errorObject[plugin.errorObject.length] = [$(tag), propertiesObject];
+          plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
         else {
           plugin.errorObject = [];
-          plugin.errorObject[plugin.errorObject.length] = [$(tag), propertiesObject];
+          plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
         }
       }
     });
@@ -753,7 +820,7 @@ validator.prototype = {
     result = true;
     $.each(checkObject, function(name, propertiesObject) {
       if ($(propertiesObject.selectedItemParent).length && !$(propertiesObject.selectedItemParent + " " + propertiesObject.selectedItem).length) {
-        thisPlugin.processErrorObject([$(propertiesObject.notSelectedItem), propertiesObject]);
+        thisPlugin.processErrorObject([$(propertiesObject.notSelectedItem).data("uniqueelement"), $(propertiesObject.notSelectedItem).data("uniqueelement"), propertiesObject, "main"]);
         result = false;
       }
     });
