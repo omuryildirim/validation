@@ -1,8 +1,9 @@
 /*
     Validation is jQuery based high compatible tool for checking any validation rule within HTML components.
-    Validation has 15 main validation functions. You can add any function or basicly call
+    Validation has 33 main validation functions. You can add any function or basicly call
     any function when creating validation objects.
 
+    * v2.3.0 - Realese 06/29/2016
     * Open Source, Free for all usage
 
     * from .. .. . . .
@@ -27,6 +28,9 @@ validator.prototype = {
     }
   },
   validationObj: {},
+  uniqueKey: 100,
+  uniqueErrorTable: {},
+  uniqueElementTable: {},
   addSearchObject: function(tag, searchObject) {
     var plugin = this;
     if (typeof tag == "object") {
@@ -47,7 +51,6 @@ validator.prototype = {
   },
   validate: function(eventType, tag, workType, returnFunction) {
     var plugin = this;
-    plugin.uniqueKey = new Date().getTime();
 
     if (typeof plugin.validationObj[tag] == "object")
       plugin.keypressValidation(plugin.validationObj[tag]);
@@ -56,33 +59,14 @@ validator.prototype = {
       plugin.initCheck(plugin.initObject);
 
     if (workType != "self") {
-      if (typeof returnFunction != "object") {
-        if (typeof tag == "object") {
-          $.each(tag, function(index,value) {
-            if ($(value).attr("onclick")) {
-              $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
-              $(value).attr("onclick", null);
-            };
-            $(document).on(eventType, value, function(event) {
-              var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-hasError='true']").length;
-              if (result) {
-                if(returnFunction)
-                  eval(returnFunction);
-                if ($(this).data("onclick")) {
-             	  	 event.preventDefault();
-                   eval($(this).data("onclick"));
-                }
-              }
-              return result;
-            });
-          });
-        } else {
-          if ($(tag).attr("onclick")) {
-            $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
-            $(tag)[0].onclick = null;
+      if (typeof tag == "object") {
+        $.each(tag, function(index,value) {
+          if ($(value).attr("onclick")) {
+            $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
+            $(value).attr("onclick", null);
           };
-          $(document).on(eventType, tag, function(event) {
-            var result = plugin.checkFilled(plugin.searchObj[tag], workType) && !$("[data-hasError='true']").length;
+          $(document).on(eventType, value, function(event) {
+            var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-haserror='true']").length;
             if (result) {
               if(returnFunction)
                 eval(returnFunction);
@@ -93,49 +77,24 @@ validator.prototype = {
             }
             return result;
           });
-        }
+        });
       } else {
-        if (typeof tag == "object") {
-          $.each(tag, function(index,value) {
-            if ($(value).attr("onclick")) {
-              $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
-              $(value).attr("onclick", null);
-            };
-            $(document).on(eventType, value, function(event) {
-              var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-hasError='true']").length;
-              if (result) {
-                if(returnFunction)
-                  for (var i=0; i < returnFunction.length;i++) {
-                    eval(returnFunction[i]);
-                  }
-                if ($(this).data("onclick")) {
-             	  	 event.preventDefault();
-                   eval($(this).data("onclick"));
-                }
-              }
-              return result;
-            });
-          });
-        } else {
-          if ($(tag).attr("onclick")) {
-            $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
-            $(tag).attr("onclick", null);
-          };
-          $(document).on(eventType, tag, function(event) {
-            var result = plugin.checkFilled(plugin.searchObj[tag], workType) && !$("[data-hasError='true']").length;
-            if (result) {
-              if(returnFunction)
-                for (var i=0; i < returnFunction.length;i++) {
-                  eval(returnFunction[i]);
-                }
-              if ($(this).data("onclick")) {
-           	  	 event.preventDefault();
-                 eval($(this).data("onclick"));
-              }
+        if ($(tag).attr("onclick")) {
+          $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
+          $(tag)[0].onclick = null;
+        };
+        $(document).on(eventType, tag, function(event) {
+          var result = plugin.checkFilled(plugin.searchObj[tag], workType) && !$("[data-haserror='true']").length;
+          if (result) {
+            if(returnFunction)
+              eval(returnFunction);
+            if ($(this).data("onclick")) {
+         	  	 event.preventDefault();
+               eval($(this).data("onclick"));
             }
-            return result;
-          });
-        }
+          }
+          return result;
+        });
       }
     }
   },
@@ -159,21 +118,26 @@ validator.prototype = {
               if (propertiesObject.visibility)
                 if (!plugin.checkVisibility(currentElement))
                   return true;
+              var key = plugin.createUniqueKey(currentElement);
               if (rule.test(f.innerHTML) && !plugin.checkEmpty(currentElement)) {
-                var key = plugin.createUniqueKey(currentElement);
-                if (plugin.errorObject)
-                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-                else {
-                  plugin.errorObject = [];
-                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-                }
-              };
-
+                $(currentElement).data("newerror", true);
+                plugin.processErrorObject([key, key, propertiesObject]);
+              } else {
+                $(currentElement).data("newerror", false);
+              }
             });
           });
           break;
         case "checkbox":
-          plugin.checkCB(tagObject);
+          $.each(tagObject, function (tag, propertiesObject) {
+            var key = plugin.createUniqueKey(tag);
+            if (!plugin.checkCB(tag)) {
+               $(tag).data("newerror", true);
+              plugin.processErrorObject([key, key, propertiesObject]);
+            } else {
+              $(tag).data("newerror", false);
+            }
+          });
           break;
 
         case "empty":
@@ -184,18 +148,15 @@ validator.prototype = {
                   if (propertiesObject.visibility)
                     if (!plugin.checkVisibility(currentElement))
                       return true;
+                  var key = plugin.createUniqueKey(currentElement);
                   if (!plugin.checkEmpty(currentElement)) {
-                    var key = plugin.createUniqueKey(currentElement);
-                    if (plugin.errorObject) {
-                      var newPropertiesObject = $.extend({}, propertiesObject);
-                      if (newPropertiesObject.messageType == "List") newPropertiesObject.currentIndex = index;
-                      plugin.errorObject[plugin.errorObject.length] = [key, key, newPropertiesObject];
-                    } else {
-                      plugin.errorObject = [];
-                      var newPropertiesObject = $.extend({}, propertiesObject);
-                      if (newPropertiesObject.messageType == "List") newPropertiesObject.currentIndex = index;
-                      plugin.errorObject[plugin.errorObject.length] = [key, key, newPropertiesObject];
-                    }
+                    var newPropertiesObject = $.extend({}, propertiesObject);
+                    if (newPropertiesObject.messageType == "List") newPropertiesObject.currentIndex = index;
+                    plugin.processErrorObject([key, key, newPropertiesObject]);
+
+                    $(value).data("newerror", true);
+                  } else {
+                    $(value).data("newerror", false);
                   }
               });
             }
@@ -204,15 +165,13 @@ validator.prototype = {
               if (propertiesObject.visibility)
                 if (!plugin.checkVisibility(currentElement))
                   return true;
+              var key = plugin.createUniqueKey(currentElement);
               if (!plugin.checkEmpty(currentElement)) {
-                var key = plugin.createUniqueKey(currentElement);
-                if (plugin.errorObject)
-                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-                else {
-                  plugin.errorObject = [];
-                  plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-                }
-              };
+                plugin.processErrorObject([key, key, propertiesObject]);
+                currentElement.data("newerror", true);
+              } else {
+                currentElement.data("newerror", false);
+              }
             }
           });
 
@@ -232,43 +191,55 @@ validator.prototype = {
       var eventType = type;
       $.each(tagObject, function(tag, propertiesObject) {
         propertiesObject.uniqueKey = plugin.createUniqueKey();
+        plugin.uniqueErrorTable[propertiesObject.uniqueKey] = {};
         if (propertiesObject.ruleObject) {
           $(document).on(eventType, tag, function(e) {
-            if ((propertiesObject.visibility && !plugin.checkVisibility(this)) || $(this).val() == '')
-              return false;
+            var thisElement = this;
+            $.each(propertiesObject.ruleObject, function(index, eachRuleObject) {
 
-            var uniqueKey = plugin.createUniqueKey(this);
-            var result = propertiesObject.ruleObject[0](propertiesObject.ruleObject[1], plugin, $(this));
+              if ((eachRuleObject.visibility && !plugin.checkVisibility(thisElement)) || $(thisElement).val() == '')
+                return false;
 
-            var element = $(this);
-            if (result[1]) {
-              propertiesObject.message = result[1].message;
-              if (result[1].placeErrorTo)
-                element = $(result[1].placeErrorTo);
-            }
-            if (!result[0] && result[1]) {
-              $.each(element, function(index,item) {
-                var elementKey = plugin.createUniqueKey($(item));
-                plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
-              });
-              plugin.processErrors("Keypress Error");
-            } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
-              $.each(element, function(index,item) {
-                var elementKey = plugin.createUniqueKey($(item));
-                plugin.removeErrorElements(elementKey, propertiesObject.uniqueKey, "animation-off");
-              });
-            }
-            if (propertiesObject.withReturn)
-              return result;
-            if (!result[1]) {
-              if (!result[0]) {
-                plugin.selfErrorObject = [uniqueKey];
-                plugin.processErrors("Add Self Class");
-              } else {
-                plugin.selfErrorObject = [uniqueKey];
-                plugin.processErrors("Remove Self Class");
+              var uniqueKey = plugin.createUniqueKey(thisElement);
+              var result = eachRuleObject.rule(eachRuleObject, plugin, uniqueKey);
+
+              var element = $(thisElement);
+              if (result[1]) {
+                if (!eachRuleObject.message) eachRuleObject.message = result[1].message;
+                if (result[1].parentTag) eachRuleObject.parentTag = result[1].parentTag;
+                if (result[1].type) eachRuleObject.type = result[1].type;
+                if (result[1].placeErrorTo) element = $(result[1].placeErrorTo);
               }
-            }
+              if (!result[0] && result[1]) {
+                $.each(element, function(index,item) {
+                  var elementKey = plugin.createUniqueKey($(item));
+                  plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, eachRuleObject]);
+                  $(item).data("newerror", "true");
+                });
+                plugin.processErrors("Keypress Error");
+              } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
+                $.each(plugin.uniqueErrorTable[propertiesObject.uniqueKey], function(index,item) {
+                  $("[data-uniqueelement='" + index + "']").data("newerror", "false");
+                  plugin.removeErrorElements(index, propertiesObject.uniqueKey, "animation-off");
+                });
+              }
+              if (propertiesObject.withReturn)
+                propertiesObject.result = result[0];
+                return result[0];
+              if (!result[1]) {
+                if (!result[0]) {
+                  plugin.selfErrorObject = [uniqueKey];
+                  plugin.processErrors("Add Self Class");
+                } else {
+                  plugin.selfErrorObject = [uniqueKey];
+                  plugin.processErrors("Remove Self Class");
+                }
+              }
+            });
+
+            if (propertiesObject.withReturn)
+              return propertiesObject.result;
+
           });
         } else {
           $(document).on(eventType, tag, function(e) {
@@ -276,8 +247,8 @@ validator.prototype = {
               return false;
 
             var uniqueKey = plugin.createUniqueKey(this);
+            var result = propertiesObject.rule(propertiesObject, plugin, uniqueKey);
 
-            var result = propertiesObject.rule(this);
             if (!result[1]) {
               if (!result[0]) {
                 plugin.selfErrorObject = [uniqueKey];
@@ -289,22 +260,24 @@ validator.prototype = {
             }
             var element = $(this);
             if (result[1]) {
-              propertiesObject.message = result[1].message;
-              if (result[1].placeErrorTo)
-                element = $(result[1].placeErrorTo);
+              if (!propertiesObject.message) propertiesObject.message = result[1].message;
+              if (result[1].parentTag) propertiesObject.parentTag = result[1].parentTag;
+              if (result[1].type) propertiesObject.type = result[1].type;
+              if (result[1].placeErrorTo) element = $(result[1].placeErrorTo);
             }
 
             if (!result[0] && result[1]) {
               $.each(element, function(index,item) {
                 var elementKey = plugin.createUniqueKey($(item));
+                $(item).data("newerror", "true");
                 plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
               });
               plugin.processErrors("Keypress Error");
             } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
-                $.each(element, function(index,item) {
-                  var elementKey = plugin.createUniqueKey($(item));
-                  plugin.removeErrorElements(elementKey, propertiesObject.uniqueKey, "animation-off");
-                });
+              $.each(plugin.uniqueErrorTable[propertiesObject.uniqueKey], function(index,item) {
+                $("[data-uniqueelement='" + index + "']").data("newerror", "false");
+                plugin.removeErrorElements(index, propertiesObject.uniqueKey, "animation-off");
+              });
             }
           });
         }
@@ -314,6 +287,14 @@ validator.prototype = {
   checkEmpty: function(tag) {
     var value = $(tag).val();
     return (value != "" && value != null && value != "null" && value.length);
+  },
+  checkCB: function(tag) {
+    var plugin = this,
+        result = true;
+    if (!$(tag).prop("checked") && $(tag).is(":visible")) {
+      result = false;
+    }
+    return result;
   },
   checkVisibility: function(tag) {
     return $(tag).is(":visible") ? true : $(tag).is("select") && $(tag).parent().is(":visible");
@@ -326,6 +307,19 @@ validator.prototype = {
         this.errorObject[this.errorObject.length] = errorArray;
       }
   },
+  processObject: function(object, key, value, action) {
+    if (action == "remove")
+      if (object)
+        if (object[key])
+          delete object[key];
+        else return;
+      else return;
+
+    if (object)
+        object[key] = value;
+    else
+      object = {}, object[key] = value;
+  },
   processErrors: function(processType) {
     var plugin = this;
     switch (processType) {
@@ -335,6 +329,8 @@ validator.prototype = {
         $.each(plugin.errorObject, function(index, elementArray) {
           if (elementArray && elementArray[0] == elementArray[1]) {
             var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag).attr("data-uniqueparent", elementArray[0]);
+            plugin.processObject(plugin.uniqueElementTable[elementArray[0]], elementArray[1], targetElement.data("uniqueparent"));
+            plugin.processObject(plugin.uniqueErrorTable[elementArray[1]], elementArray[0], targetElement.data("uniqueparent"));
 
             if (elementArray[2].messageType == "List")
               var errorDiv = plugin.createErrorDiv(elementArray[2].type, elementArray[2].showLabel, elementArray[2].messages[elementArray[2].currentIndex], elementArray[2].parentTag, elementArray[1]);
@@ -362,11 +358,11 @@ validator.prototype = {
 
         break;
       case "Add Self Class":
-        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-hasError", true);
+        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-haserror", true);
         delete plugin.selfErrorObject;
         break;
       case "Remove Self Class":
-        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").removeClass(plugin.classNames.errorSelfClass).addClass(plugin.classNames.successSelfClass).attr("data-hasError", false);
+        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").removeClass(plugin.classNames.errorSelfClass).addClass(plugin.classNames.successSelfClass).attr("data-haserror", false);
         delete plugin.selfErrorObject;
         break;
       case "Keypress Error":
@@ -374,15 +370,20 @@ validator.prototype = {
             sliced = 0;
         $.each(plugin.errorObject, function(index, elementArray) {
           if (elementArray && elementArray[0] != elementArray[1]) {
+
+            var errorDiv = plugin.createErrorDiv(elementArray[2].type || "Rule", false, elementArray[2].message, false, elementArray[1]);
+            plugin.changeRemover(elementArray[0], elementArray[1]);
+
+            var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag)
+            .attr("data-uniqueparent", elementArray[0]);
+
+            plugin.processObject(plugin.uniqueElementTable[elementArray[0]], elementArray[1], targetElement.data("uniqueparent"));
+            plugin.processObject(plugin.uniqueErrorTable[elementArray[1]], elementArray[0], targetElement.data("uniqueparent"));
+
             if ($("[data-uniqueparent='" + elementArray[0] + "'] [data-uniqueerror='" + elementArray[1] + "']").length)
               plugin.removeErrorElements(elementArray[0], elementArray[1], "animation-off");
 
-            var errorDiv = plugin.createErrorDiv("Rule", false, elementArray[2].message, false, elementArray[1]);
-
-            var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag)
-            .attr("data-uniqueparent", elementArray[0])
-            .addClass(plugin.classNames.hasError)
-            .append(errorDiv);
+            targetElement.addClass(plugin.classNames.hasError).append(errorDiv);
 
             newObject.splice(index-sliced, 1);
             sliced += 1;
@@ -442,6 +443,7 @@ validator.prototype = {
     var currentElement = $("[data-uniqueelement='" + uniqueKey + "']")
     var select = currentElement.is("select");
     var checkbox = currentElement.is("[type='checkbox']");
+    var radio = currentElement.is(".div-radio");
     var expire = currentElement.is("[name^=\"expiry\"]");
     var id = "#" + currentElement.attr("id") || "." + currentElement.attr("class");
     var date = currentElement.attr("format");
@@ -449,35 +451,56 @@ validator.prototype = {
     if (checkbox || date)
       $(document).on("change", id, function() {
         _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+        $(this).data("newerror", false);
       });
     else if (expire)
       $(document).on("change", id, function() {
-        if ($(this).val() != "")
+        if ($(this).val() != "" && $(this).data("newerror") == "false")
           _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+        else
+          $(this).data("newerror", false);
       });
     else if (select)
 	    if ($(id).is("[id^='bday']")) {
 	      $(document).on("change", id, function(e) {
-	        if ($(e.target).val() != "")
+	        if ($(e.target).val() != "" && $(e.target).data("newerror") == "false")
 	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+          else
+            $(e.target).data("newerror", false);
 	      });
 	      $(document).on("change", "#" + $(el).parents(elementObject[1].parentTag).next().find("select").attr("id"), function(e) {
-	        if ($(e.target).val() != "")
+	        if ($(e.target).val() != "" && $(e.target).data("newerror") == "false")
 	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on");
+          else
+            $(e.target).data("newerror", false);
 	      });
 	      $(document).on("change", "#" + $(el).parents(elementObject[1].parentTag).next().next().find("select").attr("id"), function(e) {
-	        if ($(e.target).val() != "")
+	        if ($(e.target).val() != "" && $(e.target).data("newerror") == "false")
 	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on");
+          else
+            $(e.target).data("newerror", false);
 	      });
 	    } else
-	      $(document).on("change", id, function() {
-	        if ($(this).val() != "")
+	      $(document).on("change", id, function(e) {
+	        if ($(e.target).val() != "" && $(e.target).data("newerror") == "false")
 	          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+          else
+            $(e.target).data("newerror", false);
 	      });
+    else if (radio) {
+      $(document).on("click", ".select__fare", function() {
+        if ($(this).children(".div-radio").length && $(this).data("newerror") == "false")
+          _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+        else
+          $(this).data("newerror", false);
+      });
+    }
     else
 	    $(document).on("keypress", id, function() {
-	      if ($(this).val() != "")
+	      if ($(this).val() != "" && $(this).data("newerror") == "false")
 	        _this.removeErrorElements(uniqueKey, errorKey, "animation-on"),_this.updateBottomError(this.id||this.className);
+        else
+          $(this).data("newerror", false);
 	    });
   },
   removeErrorElements: function(uniqueKey, errorKey, animation) {
@@ -488,6 +511,9 @@ validator.prototype = {
       });
       return true;
     }
+
+    _this.processObject(_this.uniqueElementTable[uniqueKey], errorKey, uniqueKey, "remove");
+    _this.processObject(_this.uniqueErrorTable[errorKey], uniqueKey, uniqueKey, "remove");
     var targetElement = $("[data-uniqueparent='" + uniqueKey + "']");
     var errorElement = "[data-uniqueparent='" + uniqueKey + "'] [data-uniqueerror='" + errorKey + "']";
     if (!targetElement.is("." + _this.classNames.errorSuccess)) {
@@ -551,21 +577,21 @@ validator.prototype = {
         $("." + plugin.classNames.bottomPageErrorClass).remove();
       }, 1200);
   },
-  checkEmail: function(e) {
+  checkEmail: function(propertiesObject, plugin, uniqueKey) {
     var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-    var email = $(e).val();
+    var email = $("[data-uniqueelement='" + uniqueKey + "']").val();
     if (!re.test(email) || email == "" || email == null) {
       return [false];
     }
     return [true];
   },
-  checkPhone: function(e) {
+  checkPhone: function(propertiesObject, plugin, uniqueKey) {
     var result = [true];
 
     f = "#alt-tel-number";
 
-    $(e).each(function(index) {
+    $("[data-uniqueelement='" + uniqueKey + "']").each(function(index) {
 
       if ($(this).val() == null || $(this).val() == "")
         result = [false];
@@ -626,12 +652,10 @@ validator.prototype = {
 
     return result;
   },
-  checkCounts: function(passengers, plugin, nodeElement) {
-    var adult = passengers[0],
-      child = passengers[1],
-      infant = passengers[2];
-
-    e = "#adult", f = "#child", g = "#infant";
+  checkCounts: function(propertiesObject, plugin, uniqueKey) {
+    var adult = propertiesObject.elements[0],
+      child = propertiesObject.elements[1],
+      infant = propertiesObject.elements[2];
 
     var result = [true];
     //Create variables for passenger object
@@ -686,8 +710,9 @@ validator.prototype = {
     return years;
 
   },
-  compareDateWithDate: function(dateObject, thisPlugin, thisSelect) {
-    thisSelect = $(thisSelect);
+  compareDateWithDate: function(propertiesObject, plugin, uniqueKey) {
+    var thisSelect = $("[data-uniqueelement='" + uniqueKey + "']"),
+        dateObject = propertiesObject;
 
     var thisHiddenObject = $("#" + thisSelect.attr("id").split("_")[0] + "_hidden_" + thisSelect.attr("id").split("_")[2]);
     var result = [true, {placeErrorTo: thisHiddenObject}];
@@ -726,13 +751,13 @@ validator.prototype = {
     return result;
 
   },
-  checkIfSame: function(array, thisPlugin) {
-    var first = array[0],
-      second = array[1],
+  checkIfSame: function(propertiesObject, plugin, uniqueKey) {
+    var first = propertiesObject.elements[0],
+      second = propertiesObject.elements[1],
       result = [true, {placeErrorTo: [first,second]}];
 
 
-    if (array[2] == "password" && $(first).val().length < parseInt(minPassWordLength)) {
+    if (propertiesObject.checkType == "password" && $(first).val().length < parseInt(minPassWordLength)) {
       result = [false, {placeErrorTo: first}];
     } else if ($(first).val().length) {
       if ($(second).val().length) {
@@ -746,13 +771,12 @@ validator.prototype = {
 
     return result;
   },
-  checkID: function(idArray, thisPlugin, current) {
-    var natID = idArray[0];
-    var natIDtype = idArray[1];
+  checkID: function(propertiesObject, plugin, uniqueKey) {
+    var natID = $(propertiesObject.elements[0]).val();
 
     var result = [true];
     if (natID != "")
-      switch (natIDtype) {
+      switch (propertiesObject.natIDType) {
         case "TR":
 
           var tckimlikno_str = natID;
@@ -810,31 +834,11 @@ validator.prototype = {
       }
     return result;
   },
-  checkCB: function(tagObject) {
-    var plugin = this;
-    $.each(tagObject, function (tag, propertiesObject) {
-      if (!$(tag).prop("checked") && $(tag).is(":visible")) {
-        var key = plugin.createUniqueKey(tag);
-        if (plugin.errorObject)
-          plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-        else {
-          plugin.errorObject = [];
-          plugin.errorObject[plugin.errorObject.length] = [key, key, propertiesObject];
-        }
-      }
-    });
-  },
-  checkForSelected: function(checkObject, thisPlugin) {
-    result = true;
-    $.each(checkObject, function(name, propertiesObject) {
-      if ($(propertiesObject.selectedItemParent).length && !$(propertiesObject.selectedItemParent + " " + propertiesObject.selectedItem).length) {
-        thisPlugin.processErrorObject([$(propertiesObject.notSelectedItem).data("uniqueelement"), $(propertiesObject.notSelectedItem).data("uniqueelement"), propertiesObject, "main"]);
-        result = false;
-      }
-    });
-
-    if (!result)
-      thisPlugin.processErrors();
+  checkForSelected: function(propertiesObject, plugin, uniqueKey) {
+    var result = true;
+    if ($(propertiesObject.selectedItemParent).length && !$(propertiesObject.selectedItemParent + " " + propertiesObject.selectedItem).length) {
+      result = [false, {placeErrorTo: propertiesObject.notSelectedItem, parentTag: propertiesObject.parentTag, message: propertiesObject.message, type: propertiesObject.type}];
+    };
 
     return result;
   },
@@ -1083,7 +1087,7 @@ validator.prototype = {
           plugin.isPnrValidCheck(event);
           break;
       }
-    });
+    }, 50);
   },
   classNames: {
     "errorDivClass": "input-error",
