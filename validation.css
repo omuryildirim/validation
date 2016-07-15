@@ -493,3 +493,25 @@ input.input__success {
     border-color: #6bc97d !important;
     box-shadow: 0 0 5px #6bc97d !important;
 }
+
+.error__char {
+  font-size: 20px;
+  font-weight: bold;
+  right: 8px;
+  bottom: 8px;
+  position: absolute;
+}
+
+.error__char:after {
+  content: "x";
+  color: #CA6B6B;
+}
+
+.error__char.success {
+  bottom: 6px;
+}
+
+.error__char.success:after {
+  content: "\2713";
+  color: #6bc97d;
+}

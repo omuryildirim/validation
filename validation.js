@@ -52,39 +52,25 @@ validator.prototype = {
     var plugin = this;
     plugin.uniqueKey = parseInt(new Date().getTime() + "000");
 
-    if (typeof plugin.validationObj[tag] == "object")
-      plugin.keypressValidation(plugin.validationObj[tag]);
+    if (typeof tag == "object") {
+      $.each(tag, function(index,value) {
+  	    if (typeof plugin.validationObj[value] == "object")
+  	      plugin.keypressValidation(plugin.validationObj[value]);
+      });
+  	} else if (typeof plugin.validationObj[tag] == "object")
+          plugin.keypressValidation(plugin.validationObj[tag]);
 
     if (plugin.initObject)
       plugin.initCheck(plugin.initObject);
 
-    if (workType != "self") {
-      if (typeof tag == "object") {
-        $.each(tag, function(index,value) {
-          if ($(value).attr("onclick")) {
-            $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
-            $(value).attr("onclick", null);
-          };
-          $(document).on(eventType, value, function(event) {
-            var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-haserror='true']").length;
-            if (result) {
-              if(returnFunction)
-                eval(returnFunction);
-              if ($(this).data("onclick")) {
-           	  	 event.preventDefault();
-                 eval($(this).data("onclick"));
-              }
-            }
-            return result;
-          });
-        });
-      } else {
-        if ($(tag).attr("onclick")) {
-          $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
-          $(tag)[0].onclick = null;
+    if (typeof tag == "object") {
+      $.each(tag, function(index,value) {
+        if ($(value).attr("onclick")) {
+          $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
+          $(value).attr("onclick", null);
         };
-        $(document).on(eventType, tag, function(event) {
-          var result = plugin.checkFilled(plugin.searchObj[tag], workType) && !$("[data-haserror='true']").length;
+        $(document).on(eventType, value, function(event) {
+          var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-haserror='true']").length;
           if (result) {
             if(returnFunction)
               eval(returnFunction);
@@ -95,7 +81,28 @@ validator.prototype = {
           }
           return result;
         });
-      }
+      });
+    } else {
+      if ($(tag).attr("onclick")) {
+        $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
+        $(tag)[0].onclick = null;
+      };
+      $(document).on(eventType, tag, function(event) {
+        var searchResult = plugin.checkFilled(plugin.searchObj[tag], workType);
+        var result = searchResult && !$("[data-haserror='true']").length;
+        if (result) {
+          if(returnFunction)
+            eval(returnFunction);
+          if ($(this).data("onclick")) {
+       	  	 event.preventDefault();
+             eval($(this).data("onclick"));
+          }
+        } else if (searchResult) {
+          $("html,body").stop().animate({scrollTop: $("[data-haserror='true']").offset().top - 20});
+        }
+
+        return result;
+      });
     }
   },
   checkFilled: function(searchObject, workType) {
@@ -352,10 +359,6 @@ validator.prototype = {
             targetElement.addClass(plugin.classNames.hasError).append(errorDiv);
             errorDiv.height(errorDiv.height());
 
-            if ($("[data-uniqueelement='" + elementArray[0] + "']").is("[id^='bday']")) {
-              targetElement.next().addClass(plugin.classNames.hasError).next().addClass(plugin.classNames.hasError);
-            }
-
             if (eventType == "click") {
               plugin.changeRemover(elementArray[0], parentKey, elementArray[1]);
               plugin.processErrorAnimation("add", elementArray, parentKey);
@@ -371,11 +374,19 @@ validator.prototype = {
 
         break;
       case "Add Self Class":
-        $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-haserror", true);
+        var element = $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").addClass(plugin.classNames.errorSelfClass).removeClass(plugin.classNames.successSelfClass).attr("data-haserror", true);
+        if (!$("[data-uniqueerror='" + plugin.selfErrorObject[0] + "']").length) {
+          var newError = $("<div/>", {"class": "error__char", "data-uniqueerror": plugin.selfErrorObject[0]});
+          $(element).after(newError).parent().css("position", "relative");
+          var parentPadding = parseInt(newError.parent().css("padding-right"));
+          if (parentPadding) newError.css("right", parentPadding + 8);
+        }
+        else $("[data-uniqueerror='" + plugin.selfErrorObject[0] + "']").removeClass("success");
         delete plugin.selfErrorObject;
         break;
       case "Remove Self Class":
         $("[data-uniqueelement='" + plugin.selfErrorObject[0] + "']").removeClass(plugin.classNames.errorSelfClass).addClass(plugin.classNames.successSelfClass).attr("data-haserror", false);
+        $("[data-uniqueerror='" + plugin.selfErrorObject[0] + "']").addClass("success");
         delete plugin.selfErrorObject;
         break;
       case "Nothing":
@@ -445,7 +456,6 @@ validator.prototype = {
 
     if (checkbox || date)
       $(document).on("change", id, function() {
-        if (!_this.uniqueErrorTable[uniqueKey])
         _this.removeErrorElements(uniqueKey, parentKey, errorKey, "animation-on"),_this.updateBottomError(errorKey);
       });
     else if (expire)
@@ -605,7 +615,7 @@ validator.prototype = {
       child = propertiesObject.elements[1],
       infant = propertiesObject.elements[2];
 
-    var result = [true];
+    var result = [true, propertiesObject.elements[0]];
     //Create variables for passenger object
 
     var totalAdultCount = parseInt($(adult).val());
@@ -973,7 +983,7 @@ validator.prototype = {
 
     if (obj.Character)
       $.each(obj.Character, function(i, e) {
-        $(e).on("keypress", validate.isCharacterWithTurkishCheck);
+        $(document).on("keypress", e, validate.isCharacterWithTurkishCheck);
         $(document).on('paste', e, function(event) {
           validate.pasteHandler(event, validate, "Character");
           return true;
@@ -982,7 +992,7 @@ validator.prototype = {
 
     if (obj.Numeric)
       $.each(obj.Numeric, function(i, e) {
-        $(e).on("keypress", validate.isNumericCheck);
+        $(document).on("keypress", e, validate.isNumericCheck);
         $(document).on('paste', e, function(event) {
           validate.pasteHandler(event, validate, "Numeric");
           return true;
@@ -991,7 +1001,7 @@ validator.prototype = {
 
     if (obj.Email)
       $.each(obj.Email, function(i, e) {
-        $(e).on("keypress", validate.emailCharacterCheck);
+        $(document).on("keypress", e, validate.emailCharacterCheck);
         $(document).on('paste', e, function(event) {
           validate.pasteHandler(event, validate, "Email");
           return true;
@@ -1000,7 +1010,7 @@ validator.prototype = {
 
     if (obj.PNR)
       $.each(obj.PNR, function(i, e) {
-        $(e).on("keypress", validate.isPnrValidCheck);
+        $(document).on("keypress", e, validate.isPnrValidCheck);
         $(document).on('paste', e, function(event) {
           validate.pasteHandler(event, validate, "PNR");
           return true;
@@ -1009,7 +1019,7 @@ validator.prototype = {
 
     if (obj.Phone)
       $.each(obj.Phone, function(i, e) {
-        $(e).on("keypress", function() {
+        $(document).on("keypress", e, function() {
           if (validate.isNumericCheck(event)) {
             return validate.checkPhoneAreaFull(this, event);
           };
