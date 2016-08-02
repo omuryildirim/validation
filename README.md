@@ -29,7 +29,7 @@ Validation works with a JSON definings. All you must do to give your input infor
     <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;</span>
     <span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;</span>
     <span>})&nbsp;</span>
-    <span>validation.validate(&quot;change&quot;, &quot;custom&quot;, &quot;self&quot;);</span>
+    <span>validation.validate(&quot;change&quot;, &quot;custom&quot;);</span>
   </pre>
 </div>
 </p>
