@@ -3,7 +3,7 @@
     Validation has 33 main validation functions. You can add any function or basicly call
     any function when creating validation objects.
 
-    * v2.3.1 - Realese 06/30/2016
+    * v2.3.2 - Realese 08/12/2016
     * Open Source, Free for all usage
 
     * from .. .. . . .
@@ -37,8 +37,7 @@ validator.prototype = {
       plugin.searchObj[tag] = searchObject;
   },
   addValidationObject: function(tag, validationObject) {
-    var plugin = this,
-        newObject = {}
+    var plugin = this;
     if (typeof tag == "object") {
       $.each(tag, function(index,value) {
         plugin.processObject(["validationObj", value], validationObj)
