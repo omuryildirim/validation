@@ -40,10 +40,10 @@ validator.prototype = {
     var plugin = this;
     if (typeof tag == "object") {
       $.each(tag, function(index,value) {
-        plugin.processObject(["validationObj", value], validationObj)
+        plugin.processObject(["validationObj", value], validationObject)
       })
     } else
-      plugin.processObject(["validationObj", tag], validationObj)
+      plugin.processObject(["validationObj", tag], validationObject)
   },
   validate: function(eventType, tag, workType, returnFunction) {
     var plugin = this;
@@ -259,15 +259,15 @@ validator.prototype = {
             var result = propertiesObject.rule(propertiesObject, plugin, uniqueKey);
 
             if (result[1]) {
-              if (!eachRuleObject.message) eachRuleObject.message = result[1].message;
-              if (result[1].parentTag) eachRuleObject.parentTag = result[1].parentTag;
-              if (result[1].type) eachRuleObject.type = result[1].type;
+              if (!propertiesObject.message) propertiesObject.message = result[1].message;
+              if (result[1].parentTag) propertiesObject.parentTag = result[1].parentTag;
+              if (result[1].type) propertiesObject.type = result[1].type;
               if (result[1].placeErrorTo) element = $(result[1].placeErrorTo);
 
               if (!result[0]) {
                 $.each(element, function(index,item) {
                   var elementKey = plugin.createUniqueKey($(item).attr("data-haserror", true));
-                  plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, eachRuleObject]);
+                  plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
                 });
                 plugin.processErrors("", eventType);
               } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
@@ -320,13 +320,25 @@ validator.prototype = {
         this.errorObject[this.errorObject.length] = errorArray;
       }
   },
-  processObject: function(names, objectName, selectedKey, key, value, action) {
+  processObject: function(names, value, action) {
     if (action == "remove")
-      if (this[objectName][selectedKey])
-        if (this[objectName][selectedKey][key])
-          delete this[objectName][selectedKey][key];
-        else return;
-      else return;
+      switch (names.length) {
+        case 0:
+          if (this[names[0]])
+            delete this[names[0]];
+          return;
+          break;
+        case 1:
+          if (this[names[0]][names[1]])
+            delete this[names[0]][names[1]];
+          return;
+          break;
+        case 2:
+          if (this[names[0]][names[1]][names[2]])
+            delete this[names[0]][names[1]][names[2]];
+          return;
+          break;
+      }
 
     for (var i=0;i<names.length;i++) {
       switch (i) {
@@ -345,7 +357,7 @@ validator.prototype = {
           }
           break;
         case 2:
-          if (names.length == 2) {
+          if (names.length == 3) {
             this[names[0]][names[1]][names[2]] = value;
           } else {
             this[names[0]][names[1]][names[2]] = this[names[0]][names[1]][names[2]] || {};
@@ -590,13 +602,17 @@ validator.prototype = {
       }, 1200);
   },
   checkEmail: function(propertiesObject, plugin, uniqueKey) {
-    var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
+    var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        result = [true];
+    if (propertiesObject.message) {
+      result[1] = {placeErrorTo: ["[data-uniqueelement='" + uniqueKey + "']"], message: propertiesObject.message};
+    }
     var email = $("[data-uniqueelement='" + uniqueKey + "']").val();
     if (!re.test(email) || email == "" || email == null) {
-      return [false];
+      result[0] = false;
+      return result;
     }
-    return [true];
+    return result;
   },
   checkPhone: function(propertiesObject, plugin, uniqueKey) {
     var result = [true];
