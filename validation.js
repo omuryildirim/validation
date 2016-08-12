@@ -20,16 +20,13 @@ validator.prototype = {
           rule: "*",
           parentTag: ".input__parent",
           type: "Label",
-          message: notBeEmpty,
+          message: "notBeEmpty",
           showLabel: true,
           visibility: true
         }
       }
     }
   },
-  validationObj: {},
-  uniqueErrorTable: {},
-  uniqueElementTable: {},
   addSearchObject: function(tag, searchObject) {
     var plugin = this;
     if (typeof tag == "object") {
@@ -40,17 +37,19 @@ validator.prototype = {
       plugin.searchObj[tag] = searchObject;
   },
   addValidationObject: function(tag, validationObject) {
-    var plugin = this;
+    var plugin = this,
+        newObject = {}
     if (typeof tag == "object") {
       $.each(tag, function(index,value) {
-        plugin.validationObj[value] = validationObject;
+        plugin.processObject(["validationObj", value], validationObj)
       })
     } else
-      plugin.validationObj[tag] = validationObject;
+      plugin.processObject(["validationObj", tag], validationObj)
   },
   validate: function(eventType, tag, workType, returnFunction) {
     var plugin = this;
     plugin.uniqueKey = parseInt(new Date().getTime() + "000");
+    plugin.validationObj = plugin.validationObj || {};
 
     if (typeof tag == "object") {
       $.each(tag, function(index,value) {
@@ -182,7 +181,7 @@ validator.prototype = {
       var eventType = type;
       $.each(tagObject, function(tag, propertiesObject) {
         propertiesObject.uniqueKey = plugin.createUniqueKey();
-        plugin.uniqueErrorTable[propertiesObject.uniqueKey] = {};
+        plugin.processObject(["uniqueErrorTable", propertiesObject.uniqueKey], {});
         if (propertiesObject.ruleObject) {
           $(document).on(eventType, tag, function(e) {
             var thisElement = this;
@@ -322,7 +321,7 @@ validator.prototype = {
         this.errorObject[this.errorObject.length] = errorArray;
       }
   },
-  processObject: function(objectName, selectedKey, key, value, action) {
+  processObject: function(names, objectName, selectedKey, key, value, action) {
     if (action == "remove")
       if (this[objectName][selectedKey])
         if (this[objectName][selectedKey][key])
@@ -330,10 +329,31 @@ validator.prototype = {
         else return;
       else return;
 
-    if (this[objectName][selectedKey])
-        this[objectName][selectedKey][key] = value;
-    else
-      this[objectName][selectedKey] = {}, this[objectName][selectedKey][key] = value;
+    for (var i=0;i<names.length;i++) {
+      switch (i) {
+        case 0:
+          if (names.length == 1) {
+            this[names[0]] = value;
+          } else {
+            this[names[0]] = this[names[0]] || {};
+          }
+          break;
+        case 1:
+          if (names.length == 2) {
+            this[names[0]][names[1]] = value;
+          } else {
+            this[names[0]][names[1]] = this[names[0]][names[1]] || {};
+          }
+          break;
+        case 2:
+          if (names.length == 2) {
+            this[names[0]][names[1]][names[2]] = value;
+          } else {
+            this[names[0]][names[1]][names[2]] = this[names[0]][names[1]][names[2]] || {};
+          }
+          break;
+      }
+    }
   },
   processErrors: function(processType, eventType) {
     var plugin = this;
@@ -345,8 +365,8 @@ validator.prototype = {
           if (elementArray) {
             var targetElement = $("[data-uniqueelement='" + elementArray[0] + "']").parents(elementArray[2].parentTag);
             var parentKey = plugin.createUniqueKey(targetElement[0]);
-            plugin.processObject("uniqueElementTable", elementArray[0], elementArray[1], parentKey);
-            plugin.processObject("uniqueErrorTable", elementArray[1], elementArray[0], parentKey);
+            plugin.processObject(["uniqueElementTable", elementArray[0], elementArray[1]], parentKey);
+            plugin.processObject(["uniqueErrorTable", elementArray[1], elementArray[0]], parentKey);
 
             if (elementArray[2].messageType == "List")
               var errorDiv = plugin.createErrorDiv(elementArray[2].type || "Rule", elementArray[2].showLabel, elementArray[2].messages[elementArray[2].currentIndex], parentKey, elementArray[1]);
@@ -397,6 +417,9 @@ validator.prototype = {
   },
   createErrorDiv: function(type, showLabel, message, parentKey, uniqueKey) {
     var errorDiv = $("<div/>", {"class": this.classNames.errorDivClass, "data-uniqueerror": uniqueKey});
+
+    if (this.errorMessages[message])
+      message = this.errorMessages[message];
 
     switch (type) {
       case "Label":
@@ -503,8 +526,8 @@ validator.prototype = {
       return true;
     }
 
-    _this.processObject("uniqueElementTable", uniqueKey, errorKey, parentKey, "remove");
-    _this.processObject("uniqueErrorTable", errorKey, uniqueKey, parentKey, "remove");
+    _this.processObject(["uniqueElementTable", uniqueKey, errorKey], parentKey, "remove");
+    _this.processObject(["uniqueErrorTable", errorKey, uniqueKey], parentKey, "remove");
     var targetElement = $("[data-uniqueelement='" + parentKey + "']");
     var errorElement = "[data-uniqueelement='" + parentKey + "'] [data-uniqueerror='" + errorKey + "']";
     if (!targetElement.is("." + _this.classNames.errorSuccess)) {
@@ -551,8 +574,8 @@ validator.prototype = {
         break;
       case "process":
         $("." + plugin.classNames.topPageErrorClass + "," + "." + plugin.classNames.bottomPageErrorClass).remove();
-        $("body").prepend("<div class='" + plugin.classNames.topPageErrorClass + "'>"+ pageError +"</div>");
-        $("body").prepend("<div style='left:" + plugin.pageErrorParent.offset().left + "px' class='" + plugin.classNames.bottomPageErrorClass + "'><div class='inside'><div class='inner'><div class='" + plugin.classNames.errorHeadingClass + "'> " + pageError +  "</div>" + plugin.pageErrorHTML + "</div><div class='close'></div></div></div>");
+        $("body").prepend("<div class='" + plugin.classNames.topPageErrorClass + "'>"+ this.errorMessages.pageError +"</div>");
+        $("body").prepend("<div style='left:" + plugin.pageErrorParent.offset().left + "px' class='" + plugin.classNames.bottomPageErrorClass + "'><div class='inside'><div class='inner'><div class='" + plugin.classNames.errorHeadingClass + "'> " + this.errorMessages.pageError +  "</div>" + plugin.pageErrorHTML + "</div><div class='close'></div></div></div>");
         $("." + plugin.classNames.bottomPageErrorClass + " .close").on("click", function() {
           plugin.deleteErrorPage();
         });
@@ -1062,5 +1085,9 @@ validator.prototype = {
     "bottomEachErrorClass": "each__error",
     "topPageErrorClass": "page__error__top"
   },
-  pageErrorHTML: ""
+  pageErrorHTML: "",
+  errorMessages: {
+    notBeEmpty: "can not be empty!",
+    pageError: "Can not be empty."
+  }
 };

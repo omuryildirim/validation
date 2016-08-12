@@ -84,8 +84,7 @@
 
 
 .page__error__top:before {
-    content: "\e00c";
-    font-family: Flaticon;
+    content: "\27A4";
     font-size: 27px;
     margin-right: 5px;
     position: absolute;
@@ -147,8 +146,7 @@
 }
 
 .page__error__bottom .inside .inner .each__error:before{
-    content: "\e00c";
-    font-family: Flaticon;
+    content: "\27A4";
     margin-right: 5px;
 }
 
