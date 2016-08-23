@@ -35,6 +35,8 @@
         <li role="presentation"><a href="#checkIfSame" aria-controls="checkIfSame" role="tab" data-toggle="tab">Re-type Validation</a></li>
         <li role="presentation"><a href="#checkbox" aria-controls="checkbox" role="tab" data-toggle="tab">Checkbox Validation</a></li>
         <li role="presentation"><a href="#basic-form" aria-controls="basic-form" role="tab" data-toggle="tab">Basic Form Validation</a></li>
+        <li role="presentation"><a href="#compare-dates" aria-controls="compare-dates" role="tab" data-toggle="tab">Compare Dates Validation</a></li>
+        <li role="presentation"><a href="#check-for-selected" aria-controls="check-for-selected" role="tab" data-toggle="tab">Check for Selected</a></li>
       </ul>
       <div class="tab-content">
         <br/>
@@ -167,7 +169,7 @@
             </div>
           </div>
         </div>
-        <div id="basic-form" role="tabpanel" class="tab-pane fade in active">
+        <div id="basic-form" role="tabpanel" class="tab-pane fade in">
           <div class="col-sm-6 col-xs-12">
             <div class="form-group col-sm-6 col-xs-12">
               <label for="basic-input-1">Type Your Name *</label>
@@ -182,7 +184,7 @@
             </div>
             <div class="clearfix"></div>
             <div class="form-group col-sm-6 col-xs-12">
-              <button id="basic-form-submit" class="btn btn-danger" onclick="alert('Email received successfully!')">Submit Email!</button>
+              <button id="basic-form-submit" class="btn btn-danger" onclick="alert('Form received successfully!')">Submit Email!</button>
             </div>
             <div class="clearfix"></div>
             <div class="alert alert-info">
@@ -213,6 +215,144 @@
                 });
 
                 validate.validate("click", "#basic-form-submit", "main");
+              });
+            </div>
+          </div>
+        </div>
+        <div id="compare-dates" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="date-input-1">Select a date</label>
+              <input id="date-input-1" type="date" class="form-control"></input>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="date-input-2">Select a adult birthday</label>
+              <input id="date-input-2" type="date" class="form-control"></input>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="date-input-3">Select a date</label>
+              <input id="date-input-3" type="date" class="form-control"></input>
+            </div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="date-input-4">Please Confirm selected date</label>
+              <input id="date-input-4" type="date" class="form-control"></input>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <button id="compare-dates-submit" class="btn btn-danger" onclick="alert('Dates received successfully!')">Submit Email!</button>
+            </div>
+            <div class="clearfix"></div>
+            <div class="alert alert-info">
+              For these date inputs, Validation JS checks if dates are valid.<br/><br/>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <h4>
+              Here the JS which makes validation for date inputs.
+            </h4>
+            <div class="js">
+              $(document).ready(function() {
+                var validate = new validator();
+
+                validate.addValidationObject("#compare-dates-submit", {
+                  change: {
+                    "#date-input-1": {
+                      ruleObject: [{
+                        rule: validate.compareDateWithDate,
+                        checkDate: new Date(),
+                        parentTag: ".form-group",
+                        message: "Please select today!"
+                      }]
+                    },
+                    "#date-input-2": {
+                      ruleObject: [{
+                        rule: validate.compareDateWithDate,
+                        checkDate: new Date(),
+                        limitation: {
+                          limitStart: 12,
+                          limitEnd: 100
+                        },
+                        message: {
+                          limitStart: "Adult age must be bigger than 12!",
+                          limitEnd: "Adult age must be smaller than 100!"
+                        },
+                        parentTag: ".form-group"
+                      }]
+                    },
+                    "#date-input-4": {
+                      ruleObject: [{
+                        rule: validate.compareDateWithDate,
+                        checkInput: "#date-input-3",
+                        message: "Please confirm date correctly!",
+                        parentTag: ".form-group"
+                      }]
+                    }
+                  }
+                });
+
+                validate.validate("click", "#compare-dates-submit");
+              });
+            </div>
+          </div>
+        </div>
+        <div id="check-for-selected" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="select-1">Add an item to list</label>
+              <select id="select-1">
+                <option disabled>Select an item</option>
+                <option value="Book">Book</option>
+                <option value="Telephone">Telephone</option>
+                <option value="Keyboard">Keyboard</option>
+                <option value="Mouse">Mouse</option>
+              </select>
+            </div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label>Items</label>
+              <ul id="item-list"></ul>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <button id="add-item-to-list" class="btn btn-success" onclick="$('<li/>', {html:$('#select-1').val()}).appendTo('#item-list');$('#clear-list').removeClass('hidden');">Add Item</button>
+            </div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <button id="clear-list" class="btn btn-primary hidden" onclick="$('#item-list li').remove();$(this).addClass('hidden');">Clear List</button>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <button id="check-for-selected-submit" class="btn btn-danger" onclick="alert('List received successfully!')">Submit List!</button>
+            </div>
+            <div class="clearfix"></div>
+            <div class="alert alert-info">
+              For this item list, Validation JS checks if list has empty.<br/><br/>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <h4>
+              Here the JS which makes validation.
+            </h4>
+            <div class="js">
+              $(document).ready(function() {
+                var validate = new validator();
+
+                validate.addValidationObject("#check-for-selected-submit", {
+                  click: {
+                    "#check-for-selected-submit": {
+                      ruleObject: [{
+                        rule: validate.checkForSelected,
+                        selectedItemParent: "#item-list",
+                        selectedItem: "li",
+                        placeErrorTo: "#item-list",
+                        parentTag: ".form-group",
+                        message: "You must add a item to list!"
+                      }]
+                    }
+                  }
+                });
+
+                validate.validate("click", "#check-for-selected-submit");
               });
             </div>
           </div>

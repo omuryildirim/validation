@@ -3,6 +3,7 @@
     Validation has 33 main validation functions. You can add any function or basicly call
     any function when creating validation objects.
 
+    * v2.3.4 - Realese 08/24/2016
     * Open Source, Free for all usage
 
     * from .. .. . . .
@@ -187,26 +188,27 @@ validator.prototype = {
 
               if ((eachRuleObject.visibility && !plugin.checkVisibility(thisElement)))
                 return false;
-              else if ($(thisElement).val() == '') {
+              else if ($(thisElement).val() == '' && eventType != "click") {
                 plugin.selfErrorObject = [plugin.createUniqueKey(thisElement)];
                 plugin.processErrors("Nothing");
                 return true;
               }
 
-              var uniqueKey = plugin.createUniqueKey(thisElement);
-              var result = eachRuleObject.rule(eachRuleObject, plugin, uniqueKey);
+              var uniqueKey = plugin.createUniqueKey(thisElement),
+                  result = eachRuleObject.rule(eachRuleObject, plugin, uniqueKey),
+                  submitObject = $.extend({}, eachRuleObject, true);
 
               var element = $(thisElement);
               if (result[1]) {
-                if (!eachRuleObject.message) eachRuleObject.message = result[1].message;
-                if (result[1].parentTag) eachRuleObject.parentTag = result[1].parentTag;
-                if (result[1].type) eachRuleObject.type = result[1].type;
+                if (result[1].message) submitObject.message = result[1].message;
+                if (result[1].parentTag) submitObject.parentTag = result[1].parentTag;
+                if (result[1].type) submitObject.type = result[1].type;
                 if (result[1].placeErrorTo) element = $(result[1].placeErrorTo);
 
                 if (!result[0]) {
                   $.each(element, function(index,item) {
                     var elementKey = plugin.createUniqueKey($(item).attr("data-haserror", true));
-                    plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, eachRuleObject]);
+                    plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, submitObject]);
                   });
                   plugin.processErrors("", eventType, "validationError");
                 } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
@@ -248,25 +250,26 @@ validator.prototype = {
 
             if ((propertiesObject.visibility && !plugin.checkVisibility(this)))
               return false;
-            else if (element.val() == '') {
+            else if (element.val() == '' && eventType != "click") {
               plugin.selfErrorObject = [plugin.createUniqueKey(this)];
               plugin.processErrors("Nothing");
               return true;
             }
 
-            var uniqueKey = plugin.createUniqueKey(this);
-            var result = propertiesObject.rule(propertiesObject, plugin, uniqueKey);
+            var uniqueKey = plugin.createUniqueKey(this),
+                result = propertiesObject.rule(propertiesObject, plugin, uniqueKey),
+                submitObject = $.extend({}, propertiesObject, true);
 
             if (result[1]) {
-              if (!propertiesObject.message) propertiesObject.message = result[1].message;
-              if (result[1].parentTag) propertiesObject.parentTag = result[1].parentTag;
-              if (result[1].type) propertiesObject.type = result[1].type;
+              if (result[1].message) submitObject.message = result[1].message;
+              if (result[1].parentTag) submitObject.parentTag = result[1].parentTag;
+              if (result[1].type) submitObject.type = result[1].type;
               if (result[1].placeErrorTo) element = $(result[1].placeErrorTo);
 
               if (!result[0]) {
                 $.each(element, function(index,item) {
                   var elementKey = plugin.createUniqueKey($(item).attr("data-haserror", true));
-                  plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, propertiesObject]);
+                  plugin.processErrorObject([elementKey, propertiesObject.uniqueKey, submitObject]);
                 });
                 plugin.processErrors("", eventType, "validationError");
               } else if ($("[data-uniqueerror='" + propertiesObject.uniqueKey + "']").length) {
@@ -690,70 +693,50 @@ validator.prototype = {
 
   },
   checkDate: function(date1, date2, kind) {
-    var diff = Math.floor(date1.getTime() - date2.getTime());
-    var diffindays = Math.floor(date1.getDate() - date2.getDate());
-    var years = Math.floor(date1.getFullYear() - date2.getFullYear());
-    var diffinmonths = Math.floor(date1.getMonth() - date2.getMonth());
+    var diff = Math.floor(date1.getTime() - date2.getTime()),
+        diffindays = Math.floor(date1.getDate() - date2.getDate()),
+        years = Math.floor(date1.getFullYear() - date2.getFullYear()),
+        diffinmonths = Math.floor(date1.getMonth() - date2.getMonth());
+
     if (kind) {
       var diffindays = Math.floor(date2.getDate() - date1.getDate());
       var years = Math.floor(date2.getFullYear() - date1.getFullYear());
       var diffinmonths = Math.floor(date2.getMonth() - date1.getMonth());
     }
 
-    if (!(diffindays >= 0))
-      diffinmonths += (diffindays / 30);
-    if (!(diffinmonths >= 0))
-      years += (diffinmonths / 12);
+    diffinmonths += (diffindays / 30);
+    years += (diffinmonths / 12);
 
     if (kind && (years == 0 && diffinmonths < 6))
       years--;
 
-
-    var message = date2.toDateString();
-
     return years;
-
   },
   compareDateWithDate: function(propertiesObject, plugin, uniqueKey) {
     var thisSelect = $("[data-uniqueelement='" + uniqueKey + "']"),
-        dateObject = propertiesObject;
+        dateObject = propertiesObject,
+        result = [true, {placeErrorTo: thisSelect}],
+        thisDate = new Date(thisSelect.val());
 
-    var thisHiddenObject = $("#" + thisSelect.attr("id").split("_")[0] + "_hidden_" + thisSelect.attr("id").split("_")[2]);
-    var result = [true, {placeErrorTo: thisHiddenObject}];
+    if (dateObject.checkInput)
+      dateObject.checkDate = new Date($(dateObject.checkInput).val());
 
-    var thisHidden = thisHiddenObject.val();
-    if (thisHidden == "NaN") {
-      return result;
-    }
+    var diffDep = plugin.checkDate(dateObject.checkDate, thisDate, false);
 
-    if (thisHidden == null || thisHidden == "") {
-      return result;
-    }
-
-    var checkDate = dateObject.startDate == dateObject.endDate ? dateObject.startDate:dateObject.endDate;
-    var whichDate = dateObject.startDate == dateObject.endDate ? "departureDate":"returnDate";
-
-    var title = thisSelect[0].id.split("_")[0];
-    var paxType = thisSelect.parents(".tab-pane").length ? thisSelect.parents(".tab-pane").data("paxType"): "ADLT";
-
-    var limitStart = dateObject.limitationByType[title][paxType][0];
-    var limitEnd = dateObject.limitationByType[title][paxType][1];
-
-    var thisDate = new Date(parseInt(thisHidden));
-
-    var innerValidate = new validator();
-    var diffDep = innerValidate.checkDate(checkDate, thisDate, false);
-
-    if (!(limitEnd > diffDep)) {
-      result[1].message = ageError[title][paxType][whichDate].lower;
-      result[0] = false;
-    } else if (!(diffDep >= limitStart)) {
-      result[1].message = ageError[title][paxType][whichDate].higher;
+    if (dateObject.limitation) {
+      if (!(dateObject.limitation.limitEnd > diffDep)) {
+        result[1].message = dateObject.message.limitEnd;
+        result[0] = false;
+      } else if (!(diffDep >= dateObject.limitation.limitStart)) {
+        result[1].message = dateObject.message.limitStart;
+        result[0] = false;
+      }
+    } else if (diffDep < 0 || diffDep > 0) {
+      result[1].message = dateObject.message || "datesMustBeSame";
       result[0] = false;
     }
 
     return result;
-
   },
   checkIfSame: function(propertiesObject, plugin, uniqueKey) {
     var first = propertiesObject.elements[0],
@@ -839,9 +822,9 @@ validator.prototype = {
     return result;
   },
   checkForSelected: function(propertiesObject, plugin, uniqueKey) {
-    var result = true;
+    var result = [true, {placeErrorTo: propertiesObject.placeErrorTo, parentTag: propertiesObject.parentTag, message: propertiesObject.message, type: propertiesObject.type}];
     if ($(propertiesObject.selectedItemParent).length && !$(propertiesObject.selectedItemParent + " " + propertiesObject.selectedItem).length) {
-      result = [false, {placeErrorTo: propertiesObject.notSelectedItem, parentTag: propertiesObject.parentTag, message: propertiesObject.message, type: propertiesObject.type}];
+      result[0] = false;
     };
 
     return result;
@@ -1112,6 +1095,7 @@ validator.prototype = {
   errorMessages: {
     notBeEmpty: " can not be empty!",
     pageError: "Please check errors.",
-    mustBeSame: "These inputs must have same values!"
+    mustBeSame: "These inputs must have same values!",
+    datesMustBeSame: "Dates must be same!"
   }
 };
