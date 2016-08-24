@@ -17,6 +17,14 @@
     -webkit-animation: showUp 10s ease-out;
 }
 
+.page__error__top.remove {
+  animation: showDown 0.75s ease-in;
+  -o-animation: showDown 0.75s ease-in;
+  -ms-animation: showDown 0.75s ease-in;
+  -moz-animation: showDown 0.75s ease-in;
+  -webkit-animation: showDown 0.75s ease-in;
+}
+
 @keyframes showUp {
     4% {
         top: -62px;
@@ -78,6 +86,15 @@
         top: 0px;
     }
     80% {
+        top: -62px;
+    }
+}
+
+@keyframes showDown {
+    0% {
+        top: 0px;
+    }
+    100% {
         top: -62px;
     }
 }

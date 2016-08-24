@@ -36,7 +36,7 @@
         <li role="presentation"><a href="#checkbox" aria-controls="checkbox" role="tab" data-toggle="tab">Checkbox Validation</a></li>
         <li role="presentation"><a href="#basic-form" aria-controls="basic-form" role="tab" data-toggle="tab">Basic Form Validation</a></li>
         <li role="presentation"><a href="#compare-dates" aria-controls="compare-dates" role="tab" data-toggle="tab">Compare Dates Validation</a></li>
-        <li role="presentation"><a href="#check-for-selected" aria-controls="check-for-selected" role="tab" data-toggle="tab">Check for Selected</a></li>
+        <li role="presentation"><a href="#character-handling" aria-controls="character-handling" role="tab" data-toggle="tab">Character Handling</a></li>
       </ul>
       <div class="tab-content">
         <br/>
@@ -353,6 +353,48 @@
                 });
 
                 validate.validate("click", "#check-for-selected-submit");
+              });
+            </div>
+          </div>
+        </div>
+        <div id="character-handling" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="characterHandling">Type Your Name</label>
+              <input id="characterHandling" type="text" class="form-control"></input>
+            </div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="emailHandling">Type Your Email Address</label>
+              <input id="emailHandling" type="email" class="form-control"></input>
+            </div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <label for="numericHandling">Type Your Numeric ID</label>
+              <input id="numericHandling" type="text" class="form-control"></input>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group col-sm-6 col-xs-12">
+              <button id="check-for-selected-submit" class="btn btn-danger" onclick="alert('List received successfully!')">Submit List!</button>
+            </div>
+            <div class="clearfix"></div>
+            <div class="alert alert-info">
+              For these inputs, Validation JS checks typed charters if they are suitable to inputs character type.<br/><br/>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <h4>
+              Here the JS which makes validation.
+            </h4>
+            <div class="js">
+              $(document).ready(function() {
+                var validate = new validator();
+                
+                validate.initObject = {
+                  "Character": ["#characterHandling"],
+                  "Email": ["#emailHandling"],
+                  "Numeric": ["#numericHandling"]
+                };
+
+                validate.validate();
               });
             </div>
           </div>

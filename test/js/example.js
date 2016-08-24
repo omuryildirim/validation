@@ -133,4 +133,15 @@ $(document).ready(function() {
   });
 
   validate.validate("click", "#check-for-selected-submit");
+
+  /*////////////////////////////////////////////
+  ////////////// Character Handling ///////////
+  ///////////////////////////////////////////*/
+  validate.initObject = {
+    "Character": ["#characterHandling"],
+    "Email": ["#emailHandling"],
+    "Numeric": ["#numericHandling"]
+  };
+
+  validate.validate();
 });

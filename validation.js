@@ -50,7 +50,13 @@ validator.prototype = {
     plugin.uniqueKey = parseInt(new Date().getTime() + "000");
     plugin.validationObj = plugin.validationObj || {};
 
-    if (typeof tag == "object") {
+    if (plugin.initObject)
+      plugin.initCheck(plugin.initObject);
+
+    if (!tag) {
+      return false;
+    }
+    else if (typeof tag == "object") {
       $.each(tag, function(index,value) {
   	    if (typeof plugin.validationObj[value] == "object")
   	      plugin.keypressValidation(plugin.validationObj[value]);
@@ -58,50 +64,40 @@ validator.prototype = {
   	} else if (typeof plugin.validationObj[tag] == "object")
           plugin.keypressValidation(plugin.validationObj[tag]);
 
-    if (plugin.initObject)
-      plugin.initCheck(plugin.initObject);
-
     if (typeof tag == "object") {
       $.each(tag, function(index,value) {
         if ($(value).attr("onclick")) {
           $(value).data("onclick", $(value).attr("onclick").replace("return false", ""));
-          $(value).attr("onclick", null);
+          $(tag)[0].onclick = null;
         };
-        $(document).on(eventType, value, function(event) {
-          var result = plugin.checkFilled(plugin.searchObj[value], workType) && !$("[data-haserror='true']").length;
-          if (result) {
-            if(returnFunction)
-              eval(returnFunction);
-            if ($(this).data("onclick")) {
-         	  	 event.preventDefault();
-               eval($(this).data("onclick"));
-            }
-          }
-          return result;
-        });
+        plugin.runTag(eventType, value, workType, returnFunction);
       });
     } else {
       if ($(tag).attr("onclick")) {
         $(tag).data("onclick", $(tag).attr("onclick").replace("return false", ""));
         $(tag)[0].onclick = null;
       };
-      $(document).on(eventType, tag, function(event) {
-        var searchResult = plugin.checkFilled(plugin.searchObj[tag], workType);
-        var result = searchResult && !$("[data-haserror='true']").length;
-        if (result) {
-          if(returnFunction)
-            eval(returnFunction);
-          if ($(this).data("onclick")) {
-       	  	 event.preventDefault();
-             eval($(this).data("onclick"));
-          }
-        } else if (searchResult) {
-          $("html,body").stop().animate({scrollTop: $("[data-haserror='true']").offset().top - 20});
-        }
-
-        return result;
-      });
+      plugin.runTag(eventType, tag, workType, returnFunction);
     }
+  },
+  runTag: function(eventType, tag, workType, returnFunction) {
+    var plugin = this;
+    $(document).on(eventType, tag, function(event) {
+      var searchResult = plugin.checkFilled(plugin.searchObj[tag], workType);
+      var result = searchResult && !$("[data-haserror='true']").length;
+      if (result) {
+        if(returnFunction)
+          eval(returnFunction);
+        if ($(this).data("onclick")) {
+           event.preventDefault();
+           eval($(this).data("onclick"));
+        }
+      } else if (searchResult) {
+        $("html,body").stop().animate({scrollTop: $("[data-haserror='true']").offset().top - 20});
+      }
+
+      return result;
+    });
   },
   checkFilled: function(searchObject, workType) {
     var plugin = this;
@@ -607,7 +603,7 @@ validator.prototype = {
   },
   deleteErrorPage: function() {
       var plugin = this;
-      $("." + plugin.classNames.bottomPageErrorClass + " .inside").addClass("remove");
+      $("." + plugin.classNames.bottomPageErrorClass + " .inside," + "." + plugin.classNames.topPageErrorClass).addClass("remove");
       setTimeout(function() {
         $("." + plugin.classNames.bottomPageErrorClass).remove();
       }, 1200);
@@ -1010,51 +1006,32 @@ validator.prototype = {
 
     var validate = this;
 
-    if (obj.Character)
-      $.each(obj.Character, function(i, e) {
-        $(document).on("keypress", e, validate.isCharacterWithTurkishCheck);
+    $.each(obj, function(name, elements) {
+      var currentFunction;
+      switch (name) {
+        case "Character":
+          currentFunction = validate.isCharacterWithTurkishCheck;
+          break;
+        case "Numeric":
+          currentFunction = validate.isNumericCheck;
+          break;
+        case "Email":
+          currentFunction = validate.emailCharacterCheck;
+          break;
+        case "PNR":
+          currentFunction = validate.isPnrValidCheck;
+          break;
+        default:
+          return false;
+      }
+      $.each(elements, function(i, e) {
+        $(document).on("keypress", e, currentFunction);
         $(document).on('paste', e, function(event) {
-          validate.pasteHandler(event, validate, "Character");
+          validate.pasteHandler(event, validate, name);
           return true;
         });
       });
-
-    if (obj.Numeric)
-      $.each(obj.Numeric, function(i, e) {
-        $(document).on("keypress", e, validate.isNumericCheck);
-        $(document).on('paste', e, function(event) {
-          validate.pasteHandler(event, validate, "Numeric");
-          return true;
-        });
-      });
-
-    if (obj.Email)
-      $.each(obj.Email, function(i, e) {
-        $(document).on("keypress", e, validate.emailCharacterCheck);
-        $(document).on('paste', e, function(event) {
-          validate.pasteHandler(event, validate, "Email");
-          return true;
-        });
-      });
-
-    if (obj.PNR)
-      $.each(obj.PNR, function(i, e) {
-        $(document).on("keypress", e, validate.isPnrValidCheck);
-        $(document).on('paste', e, function(event) {
-          validate.pasteHandler(event, validate, "PNR");
-          return true;
-        });
-      });
-
-    if (obj.Phone)
-      $.each(obj.Phone, function(i, e) {
-        $(document).on("keypress", e, function() {
-          if (validate.isNumericCheck(event)) {
-            return validate.checkPhoneAreaFull(this, event);
-          };
-          return validate.isNumericCheck(event);
-        });
-      });
+    });
 
     delete validate.initObject;
   },
