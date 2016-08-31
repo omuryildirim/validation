@@ -99,7 +99,6 @@
     }
 }
 
-
 .page__error__top:before {
     content: "\27A4";
     font-size: 27px;
@@ -437,76 +436,25 @@
   top: inherit;
 }
 
-.error__success .input-error {
+.input__success~.input-error {
   height: 0px !important;
   overflow: hidden;
   color: #6bc97d;
 }
 
-.e__checkbox ~ label:before,
-.e__radio ~ label:before,
-.e__radio ~ .div-checkbox {
-  border-color: #da4453 !important;
-}
-
-span.input-error.e__checkbox:after,
-span.input-error.general:after {
-    content: "";
-}
-
-.has__error input,
-.has__error select,
-.has__error textarea,
-.has__error .input-group .form-control,
-.has__error .input-group-select-down .single,
-.has__error .input-group-select-down .selectize-input,
-.has__error .intl-tel-input input,
-.has__error .selectize-control .selectize-input,
-.has__error .input-group.bs-select div {
-    border-color: #da4453 !important;
-    transition: border-color ease-out 0.5s;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-}
-
-.error__success input,
-.error__success select,
-.error__success textarea,
-.error__success .input-group .form-control,
-.error__success .input-group-select-down .single,
-.error__success .input-group-select-down .selectize-input,
-.error__success .intl-tel-input input,
-.error__success .selectize-control .selectize-input,
-.error__success .input-group.bs-select div {
-    border-color: #6bc97d !important;
-}
-
-[data-uniqueelement] label {
-  transition: all ease-out 0.5s;
-  font-weight: inherit;
-}
-
-.has__error label {
-    color: #da4453;
-    font-weight: bold;
-}
-
-.error__success label {
-    color: #6bc97d;
-    font-weight: bold;
-}
-
+.input__error,
 select.input__error,
 input.input__error {
   border-color: #CA6B6B !important;
   box-shadow: 0 0 5px #CA6B6B !important;
+  transition: border-color ease-out 0.5s;
 }
 
+.input__success,
 select.input__success,
 input.input__success {
-    border-color: #6bc97d !important;
-    box-shadow: 0 0 5px #6bc97d !important;
+  border-color: #6bc97d !important;
+  box-shadow: 0 0 5px #6bc97d !important;
 }
 
 .error__char {

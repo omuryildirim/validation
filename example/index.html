@@ -1,0 +1,398 @@
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta name="viewport" content="width=device-width" />
+  <title>Validation JS - Example</title>
+  <script src="js/jquery.js"></script>
+  <script src="js/jquery.validation.js"></script>
+  <script src="js/example.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/validation.css"></link>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"></link>
+</head>
+
+<body>
+  <div class="container">
+    <div class="col-xs-12 jumbotron">
+      <h2>
+        Validation.js V3 <span class="label label-info">Examples</span>
+      </h2>
+      <p>Welcome to Validation. Please take your form and prepare the easiest validation solutions in the universe.</p>
+    </div>
+    <div class="col-xs-12 main__container">
+      <div class="alert alert-success">
+        As the world changes, validation can't wait too. With V3, validation creating becomes very easy. Now you can put validation tags to your inputs and then sit back and enjoy.
+        There are two new way to create validations. First, put data-validation tags directly your input. Then call validation jQuery function in document ready.
+        Second, select a form with jQuery selector and call validation jQuery function with your options as parameter.
+      </div>
+      <div class="clearfix"></div>
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#checkEmpty" aria-controls="checkEmpty" role="tab" data-toggle="tab">Check Empty Validation</a></li>
+        <li role="presentation"><a href="#checkEmail" aria-controls="checkEmail" role="tab" data-toggle="tab">Email Validation</a></li>
+        <li role="presentation"><a href="#checkIfSame" aria-controls="checkIfSame" role="tab" data-toggle="tab">Re-type Validation</a></li>
+        <li role="presentation"><a href="#compareDates" aria-controls="compareDates" role="tab" data-toggle="tab">Compare Dates Validation</a></li>
+        <li role="presentation"><a href="#characterHandling" aria-controls="characterHandling" role="tab" data-toggle="tab">Character Handling</a></li>
+        <li role="presentation"><a href="#basicForm" aria-controls="basicForm" role="tab" data-toggle="tab">Basic Form Validation</a></li>
+      </ul>
+      <div class="tab-content">
+        <br/>
+        <div id="checkEmpty" role="tabpanel" class="tab-pane fade in active">
+          <div class="col-sm-6 col-xs-12">
+            <form>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="emptyFormName">Name</label>
+                <input id="emptyFormName" data-validation="empty" data-target="#emptySubmit" type="text" class="form-control"></input>
+              </div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="emptyFormSurname">Surname</label>
+                <input id="emptyFormSurname" data-validation="empty" data-target="#emptySubmit" type="text" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="emptySubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Empty Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="alert alert-success">
+              You can simply put (data-validation="empty") tag for defining validation type. And (data-target="#emptySubmit") tag for defining submit button.
+            </div>
+            <div class="html">
+            &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+              &lt;label for=&quot;emptyFormName&quot;&gt;Name&lt;/label&gt;
+              &lt;input id=&quot;emptyFormName&quot; data-validation=&quot;empty&quot; data-target=&quot;#emptySubmit&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+              &lt;label for=&quot;emptyFormSurname&quot;&gt;Surname&lt;/label&gt;
+              &lt;input id=&quot;emptyFormSurname&quot; data-validation=&quot;empty&quot; data-target=&quot;#emptySubmit&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+              &lt;button id=&quot;emptySubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Empty Form!&lt;/button&gt;
+            &lt;/div&gt;
+            </div>
+            <div class="js">
+              $(document).ready(function() {
+                $("body").validation();
+              });
+            </div>
+          </div>
+        </div>
+        <div id="checkEmail" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <form>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="emailFormEmail">Email</label>
+                <input id="emailFormEmail" data-validation="email" data-control="#emailFormSubmit" type="text" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="emailFormSubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Email Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="alert alert-success">
+              You can simply put (data-validation="email") tag for defining validation type. And (data-control="#emailFormSubmit") tag for defining submit button.
+            </div>
+            <div class="html">
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;emailFormEmail&quot;&gt;Email&lt;/label&gt;
+                &lt;input id=&quot;emailFormEmail&quot; data-validation=&quot;email&quot; data-control=&quot;#emailFormSubmit&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;button id=&quot;emailFormSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Email Form!&lt;/button&gt;
+              &lt;/div&gt;
+            </div>
+            <div class="js">
+              $(document).ready(function() {
+                $("body").validation();
+              });
+            </div>
+          </div>
+        </div>
+        <div id="checkIfSame" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <form>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="ifSameFormPassword">Password</label>
+                <input id="ifSameFormPassword" data-validation="same" data-with="#ifSameFormPasswordReType" data-control="#ifSameFormSubmit" type="password" class="form-control"></input>
+              </div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="ifSameFormPasswordReType">Re-type Password</label>
+                <input id="ifSameFormPasswordReType" type="password" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="ifSameFormSubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Email Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="alert alert-success">
+              You can simply put (data-validation="same") tag for defining validation type. (data-with="#ifSameFormPasswordReType") tag is mandatory for defining other input.
+              And (data-control="#ifSameFormSubmit") for defining submit button.
+            </div>
+            <div class="html">
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;ifSameFormPassword&quot;&gt;Password&lt;/label&gt;
+                &lt;input id=&quot;ifSameFormPassword&quot; data-validation=&quot;same&quot; data-with=&quot;#ifSameFormPasswordReType&quot; data-control=&quot;#ifSameFormSubmit&quot; type=&quot;password&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;ifSameFormPasswordReType&quot;&gt;Re-type Password&lt;/label&gt;
+                &lt;input id=&quot;ifSameFormPasswordReType&quot; type=&quot;password&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;button id=&quot;ifSameFormSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Email Form!&lt;/button&gt;
+              &lt;/div&gt;
+            </div>
+            <div class="js">
+              $(document).ready(function() {
+                $("body").validation();
+              });
+            </div>
+          </div>
+        </div>
+        <div id="compareDates" role="tabpanel" class="tab-pane fade in">
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href=".twoDateInput" aria-controls="twoDateInput" role="tab" data-toggle="tab">Compare Two Date Input</a></li>
+            <li role="presentation"><a href=".oneDate" aria-controls="oneDate" role="tab" data-toggle="tab">Compare One Date Input with Defined Date</a></li>
+            <li role="presentation"><a href=".twoDateInputWithLimitation" aria-controls="twoDateInputWithLimitation" role="tab" data-toggle="tab">Compare Two Date Input with Limitations</a></li>
+          </ul>
+          <br/>
+          <div class="col-sm-6 col-xs-12">
+            <form>
+              <div class="tab-content">
+                <div role="tabpanel" class="twoDateInput tab-pane fade in active">
+                  <div class="form-group col-sm-6 col-xs-12">
+                    <label for="compareDatesFormDate">Select Date</label>
+                    <input id="compareDatesFormDate" data-validation="date" data-with="#compareDatesFormDateSame" data-control="#compareDatesForSubmit" type="date" class="form-control"></input>
+                  </div>
+                  <div class="form-group col-sm-6 col-xs-12">
+                    <label for="compareDatesFormDateSame">Select Same Date</label>
+                    <input id="compareDatesFormDateSame" type="date" class="form-control"></input>
+                  </div>
+                </div>
+                <div role="tabpanel" class="oneDate tab-pane fade">
+                  <div class="form-group col-sm-6 col-xs-12">
+                    <label for="compareDatesFormDate">Select Today</label>
+                    <input id="compareDatesFormDate" data-validation="date" data-control="#compareDatesForSubmit" type="date" class="form-control"></input>
+                  </div>
+                </div>
+                <div role="twoDateInputWithLimitation tabpanel" class="tab-pane fade">
+                  <div class="form-group col-sm-6 col-xs-12">
+                    <label for="compareDatesFormDateWithLimitation">Select Date</label>
+                    <input id="compareDatesFormDateWithLimitation" data-validation="date" data-with="#compareDatesFormDateReWithLimitation" data-limitation='{"limitEnd": 2, "limitStart": 0}' data-control="#compareDatesForSubmit" type="date" class="form-control"></input>
+                  </div>
+                  <div class="form-group col-sm-6 col-xs-12">
+                    <label for="compareDatesFormDateReWithLimitation">Select Same Date</label>
+                    <input id="compareDatesFormDateReWithLimitation" type="date" class="form-control"></input>
+                  </div>
+                </div>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="compareDatesForSubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Email Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="tab-content">
+              <div role="tabpanel" class="twoDateInput tab-pane fade in active">
+                <div class="alert alert-success">
+                  <ul>
+                    <li>(data-validation="date") tag for defining validation type.</li>
+                    <li>(data-with="#compareDatesFormDateSame") tag is mandatory for defining other input.</li>
+                    <li>(data-control="#compareDatesForSubmit") for defining submit button.</li>
+                  </ul>
+                </div>
+                <div class="html">
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;label for=&quot;compareDatesFormDate&quot;&gt;Select Date&lt;/label&gt;
+                    &lt;input id=&quot;compareDatesFormDate&quot; data-validation=&quot;date&quot; data-with=&quot;#compareDatesFormDateSame&quot; data-control=&quot;#compareDatesForSubmit&quot; type=&quot;date&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+                  &lt;/div&gt;
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;label for=&quot;compareDatesFormDateSame&quot;&gt;Select Same Date&lt;/label&gt;
+                    &lt;input id=&quot;compareDatesFormDateSame&quot; type=&quot;date&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+                  &lt;/div&gt;
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;button id=&quot;compareDatesForSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Email Form!&lt;/button&gt;
+                  &lt;/div&gt;
+                </div>
+                <div class="js">
+                  $(document).ready(function() {
+                    $("body").validation();
+                  });
+                </div>
+              </div>
+              <div role="tabpanel" class="oneDate tab-pane fade in">
+                <div class="alert alert-success">
+                  <ul>
+                    <li>(data-validation="date") tag for defining validation type.</li>
+                    <li>(data-control="#compareDatesForSubmit") for defining submit button.</li>
+                    <li>You can also type a data-date tag with a valid date like 09-07-2016 or 09.07.2016</li>
+                  </ul>
+                </div>
+                <div class="html">
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;label for=&quot;compareDatesFormDate&quot;&gt;Select Today&lt;/label&gt;
+                    &lt;input id=&quot;compareDatesFormDate&quot; data-validation=&quot;date&quot; data-control=&quot;#compareDatesForSubmit&quot; type=&quot;date&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+                  &lt;/div&gt;
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;button id=&quot;compareDatesForSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Email Form!&lt;/button&gt;
+                  &lt;/div&gt;
+                </div>
+                <div class="js">
+                  $(document).ready(function() {
+                    $("body").validation();
+                  });
+                </div>
+              </div>
+              <div role="tabpanel" class="twoDateInputWithLimitation tab-pane fade in">
+                <div class="alert alert-success">
+                  <ul>
+                    <li>(data-validation="date") tag for defining validation type.</li>
+                    <li>(data-with="#compareDatesFormDateReWithLimitation") tag is mandatory for defining other input.</li>
+                    <li>(data-limitation='{"limitEnd": 2, "limitStart": 0}') tag is an limitation object. You can add message object to limitation object. ("message": {"limitEnd": "Error"}, {"limitStart": "Error2"}})</li>
+                    <li>(data-control="#compareDatesForSubmit") for defining submit button.</li>
+                  </ul>
+                </div>
+                <div class="html">
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;label for=&quot;compareDatesFormDateWithLimitation&quot;&gt;Select Date&lt;/label&gt;
+                    &lt;input id=&quot;compareDatesFormDateWithLimitation&quot; data-validation=&quot;date&quot; data-with=&quot;#compareDatesFormDateReWithLimitation&quot; data-limitation='{&quot;limitEnd&quot;: 2, &quot;limitStart&quot;: 0}' data-control=&quot;#compareDatesForSubmit&quot; type=&quot;date&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+                  &lt;/div&gt;
+                  &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                    &lt;label for=&quot;compareDatesFormDateReWithLimitation&quot;&gt;Select Same Date&lt;/label&gt;
+                    &lt;input id=&quot;compareDatesFormDateReWithLimitation&quot; type=&quot;date&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+                  &lt;/div&gt;
+                </div>
+                <div class="js">
+                  $(document).ready(function() {
+                    $("body").validation();
+                  });
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="characterHandling" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <form>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="characterHandlingFormName">Name only Alphabet</label>
+                <input id="characterHandlingFormName" data-validation="character" data-control="#characterHandlingFormSubmit" type="text" class="form-control"></input>
+              </div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="characterHandlingFormAge">Age only numeric</label>
+                <input id="characterHandlingFormAge" data-validation="numeric" data-control="#characterHandlingFormSubmit" type="text" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="characterHandlingFormSubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Email Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="alert alert-success">
+              You can simply put (data-validation="character" or "numeric") tag for defining validation type. And (data-control="#characterHandlingFormSubmit") tag for defining submit button.
+            </div>
+            <div class="html">
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;characterHandlingFormName&quot;&gt;Name only Alphabet&lt;/label&gt;
+                &lt;input id=&quot;characterHandlingFormName&quot; data-validation=&quot;character&quot; data-control=&quot;#characterHandlingFormSubmit&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;characterHandlingFormAge&quot;&gt;Age only numeric&lt;/label&gt;
+                &lt;input id=&quot;characterHandlingFormAge&quot; data-validation=&quot;numeric&quot; data-control=&quot;#characterHandlingFormSubmit&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;button id=&quot;characterHandlingFormSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Email Form!&lt;/button&gt;
+              &lt;/div&gt;
+            </div>
+            <div class="js">
+              $(document).ready(function() {
+                $("body").validation();
+              });
+            </div>
+          </div>
+        </div>
+        <div id="basicForm" role="tabpanel" class="tab-pane fade in">
+          <div class="col-sm-6 col-xs-12">
+            <form id="form1">
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="basicFormName">Name</label>
+                <input id="basicFormName" type="text" class="form-control"></input>
+              </div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="basicFormEmail">Email</label>
+                <input id="basicFormEmail" type="text" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="basicFormPassword">Password</label>
+                <input id="basicFormPassword" type="password" class="form-control"></input>
+              </div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <label for="basicFormPasswordReType">Re-type Password</label>
+                <input id="basicFormPasswordReType" type="password" class="form-control"></input>
+              </div>
+              <div class="clearfix"></div>
+              <div class="form-group col-sm-6 col-xs-12">
+                <button id="basicFormSubmit" class="btn btn-danger" onclick="alert('Form received successfully!')" type="submit">Submit Basic Form!</button>
+              </div>
+            </form>
+          </div>
+          <div class="col-sm-6 col-xs-12">
+            <div class="html">
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;basicFormName&quot;&gt;Name&lt;/label&gt;
+                &lt;input id=&quot;basicFormName&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;basicFormEmail&quot;&gt;Email&lt;/label&gt;
+                &lt;input id=&quot;basicFormEmail&quot; type=&quot;text&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;basicFormPassword&quot;&gt;Password&lt;/label&gt;
+                &lt;input id=&quot;basicFormPassword&quot; type=&quot;password&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;label for=&quot;basicFormPasswordReType&quot;&gt;Re-type Password&lt;/label&gt;
+                &lt;input id=&quot;basicFormPasswordReType&quot; type=&quot;password&quot; class=&quot;form-control&quot;&gt;&lt;/input&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;form-group col-sm-6 col-xs-12&quot;&gt;
+                &lt;button id=&quot;basicFormSubmit&quot; class=&quot;btn btn-danger&quot; onclick=&quot;alert('Form received successfully!')&quot; type=&quot;submit&quot;&gt;Submit Basic Form!&lt;/button&gt;
+              &lt;/div&gt;
+            </div>
+            <div class="js">
+              $("#form1").validation({
+                "empty": {
+                  "#basicFormName": true
+                },
+                "email": {
+                  "#basicFormEmail": {
+                    message: "Please type correct email!",
+                    "eventType": "keydown"
+                  }
+                },
+                "same": {
+                  "#basicFormPassword": {
+                    other: "#basicFormPasswordReType"
+                  }
+                },
+                "control": {
+                  "#basicFormEmail": true,
+                  "#basicFormPassword": true,
+                  "#basicFormPasswordReType": true
+                }
+              });
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
